@@ -1,3 +1,4 @@
+import type { SectionAnchorProps } from "@/types/shared/section/section";
 import { Section } from "@/components/shared/Section/Section";
 import { Titles } from "@/components/shared/Titles/Titles";
 import { CertItem } from "../CertItem/CertItem";
@@ -5,7 +6,7 @@ import { ShieldSvg } from "@/components/shared/Icons/ShieldSvg";
 import { CheckCircleSvg } from "@/components/shared/Icons/CheckCircleSvg";
 import { PlusCircleSvg } from "@/components/shared/Icons/PlusCircleSvg";
 
-export const CertificationsSection = () => {
+export const CertificationsSection = ({ id }: SectionAnchorProps) => {
   const items = [
     {
       title: "Normativa UNE-EN 12811",
@@ -26,8 +27,8 @@ export const CertificationsSection = () => {
   ];
 
   return (
-    <Section>
-      <div className=" grid grid-cols-2 gap-12">
+    <Section id={id}>
+      <div className=" grid lg:grid-cols-2 gap-12">
         <div className="grid gap-4">
           <Titles
             titleClassName=" text-start"

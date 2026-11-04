@@ -10,14 +10,14 @@ import { ScaffoldsSection } from "@/components/Scaffolds/ScaffoldsSection/Scaffo
 export default function Home() {
   return (
     <>
-      <HomeSection />
+      <HomeSection id="inicio" />
       <ClientsSection />
-      <ScaffoldsSection />
-      <ProjectsSection />
-      <CertificationsSection />
+      <ScaffoldsSection id="andamios" />
+      <ProjectsSection id="proyectos" />
+      <CertificationsSection id="certificaciones" />
       <ManualSection />
       <OpionsSection />
-      <ContactSection />
+      <ContactSection id="contacto" />
     </>
   );
 }

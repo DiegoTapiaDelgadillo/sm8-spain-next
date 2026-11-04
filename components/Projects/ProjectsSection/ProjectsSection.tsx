@@ -1,17 +1,18 @@
+import type { SectionAnchorProps } from "@/types/shared/section/section";
 import { Titles } from "@/components/shared/Titles/Titles";
 import { ProjectCard } from "../ProjectCard/ProjectCard";
 import { Section } from "@/components/shared/Section/Section";
 
-export const ProjectsSection = () => {
+export const ProjectsSection = ({ id }: SectionAnchorProps) => {
   return (
-    <Section>
+    <Section id={id}>
       <Titles
         title="Equipo certificado, en cada montaje, conoce nuestros proyectos"
         subtitle="Casco, arnés anclado y calzado de seguridad en cada intervención.
         Nuestra política de calidad mantiene el equipo en perfecto estado,
         cuidando ante todo la seguridad en cada andamio instalado."
       />
-      <div className=" mt-12 flex justify-between gap-8 w-full">
+      <div className=" mt-12 grid sm:grid-cols-1 md:grid-cols-2 lg:flex gap-8 w-full">
         <ProjectCard />
         <ProjectCard />
         <ProjectCard />

@@ -11,3 +11,13 @@ p {
 h1 {
   font-family: var(--font-heading), serif;
 }
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}

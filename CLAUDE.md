@@ -41,7 +41,7 @@ Rediseño del sitio real https://www.sm8.es/ (alquiler y montaje de andamios mul
 
 | Tema | Decisión |
 |---|---|
-| Estructura | **Solo landing** (`app/page.tsx`) con secciones y anclas (`#andamios`, `#contacto`…). Las rutas del sitio viejo (`/andamio-multidireccional`, `/nosotros`, `/contacto`) deben redirigir a la home (redirects en `next.config.ts`) cuando se despliegue. |
+| Estructura | **Solo landing** (`app/page.tsx`) con secciones y anclas `#inicio`, `#andamios`, `#proyectos`, `#certificaciones`, `#contacto` (los `id` se pasan como prop desde `app/page.tsx`; los enlaces viven en el array `links` de `app/layout.tsx`, compartido por Navbar y Footer). Scroll suave global (`globals.css` + `data-scroll-behavior="smooth"` en `<html>`), desactivado con `prefers-reduced-motion`. Las rutas del sitio viejo (`/andamio-multidireccional`, `/nosotros`, `/contacto`) deben redirigir a la home (redirects en `next.config.ts`) cuando se despliegue. |
 | Deploy | **Vercel**. Los despliegues a producción los hace **solo Diego** (ver regla 4). No hay subagente de DevOps/despliegue. |
 | Responsive | **Mobile-first obligatorio**: todo componente nuevo o modificado debe funcionar en móvil, tablet y escritorio. Nada de paddings fijos gigantes sin breakpoints (ej. `px-80` → `px-4 md:px-12 lg:px-48`). |
 | Idioma | **Solo español de España (es-ES)** (`<html lang="es">`, `og:locale es_ES`). Sin i18n. El público objetivo está en España (Madrid): todo el contenido usa vocabulario peninsular ("móvil", "ordenador", "presupuesto"), tuteo y "vosotros" para el plural, formatos españoles (`+34`, `1.234,56 €`, `dd/mm/aaaa`, coma decimal) y nada de latinoamericanismos ni mexicanismos. Ver `.claude/agents/content-seo-specialist.md`. |
@@ -106,16 +106,16 @@ specs/          planes de implementación NN_nombre_spec.md (plantilla: specs/_T
 - Props tipadas con `interface` en `types/...` (ej. `types/shared/button/buttonProps.ts`).
 - Server Components por defecto; `"use client"` solo cuando haya estado/efectos (ContactForm, ProjectCard, IsoBuildFigure).
 - Listas de contenido como arrays de objetos dentro del componente y `.map()`.
-- Envolver secciones con `<Section>` y títulos con `<Titles>`; botones con `MainButton` / `SecondaryButton`; iconos SVG en `components/shared/Icons` (aceptan `className`).
+- Envolver secciones con `<Section id?>` (lleva `scroll-mt` para la navbar fija; las secciones aceptan `SectionAnchorProps`) y títulos con `<Titles>`; botones con `MainButton` / `SecondaryButton` (`MainButton` con `href` renderiza un `<a>`, para enlazar a anclas); iconos SVG en `components/shared/Icons` (aceptan `className`).
 - Imágenes con `next/image`.
 
 ## Diseño visual
 
-- Fondo negro (`bg-black`), superficies `neutral-900/950`, bordes `neutral-800/900`, texto secundario `neutral-500`.
+- Fondo negro (`bg-black`), superficies `neutral-900/950`, bordes `neutral-800/900`, texto secundario `neutral-500` (en texto pequeño no llega a AA: los enlaces de Navbar/Footer usan `neutral-400`; revisar el resto del sitio). Texto de `MainButton` en `blue-400` por contraste.
 - Acento principal **amarillo** (`yellow-300/400/500`): categorías, iconos, palabras destacadas.
 - Acento de acción **azul** (`blue-500`): botones principales (borde + fondo `blue-500/30`, `rounded-full`).
 - Tarjetas `rounded-xl` con borde `neutral-800` y gradientes suaves (`bg-linear-to-b from-neutral-900/60 to-black`).
-- Navbar flotante tipo píldora con `backdrop-blur`.
+- Navbar flotante tipo píldora con `backdrop-blur` desde `lg`; por debajo, hamburguesa animada (`BurgerButton`) y menú a pantalla completa. Scrollspy con `components/shared/Navbar/useActiveSection.ts` (activo en `yellow-400`). Detalle en `specs/00_navbar_responsive_spec.md`.
 
 ## Figuras isométricas (andamio/)
 
@@ -136,8 +136,9 @@ specs/          planes de implementación NN_nombre_spec.md (plantilla: specs/_T
 
 - Contenido de relleno a sustituir cuando Diego lo pase: testimonios (`OpionsSection`), datos de contacto (`ContactSection` tiene +54 y textos repetidos), logos de clientes, tarjetas de proyectos, imagen/PDF de la ficha técnica (`ManualSection`), caja vacía en Certificaciones, redes en Footer.
 - `app/layout.tsx`: metadata por defecto ("Create Next App") y `lang="en"` → cambiar a `es` y SEO real. Hay un espacio de más en `variable: "--font-heading "`.
-- Navbar: `NavbarLinks` siempre muestra "Inicio" (repetido 4 veces); falta navegación a anclas y menú móvil.
-- Enlaces del Footer apuntan todos a `/`; copyright dice 2027.
+- Responsive de las secciones (spec 01): `Section` tiene `px-48` fijo y `ClientsSection` `px-120` → scroll horizontal en móvil. Logos de `ClientsSection` con proporción incorrecta (aviso de `next/image`).
+- `BurgerSvg` y `CloseSvg` ya no se usan; confirmar con Diego si se borran.
+- Footer: copyright dice 2027 y "All rights reserved." en inglés; "Menu" sin tilde.
 - Typos en nombres: `Opion*` (→ `Opinion*`), `Enlance` (→ `Enlace`), `CertificationSection.tsx`, "Apuntalamineto". Confirmar con Diego antes de renombrar.
 - Decidir el envío del formulario de contacto.
 - Redirects de rutas viejas al desplegar en Vercel.
