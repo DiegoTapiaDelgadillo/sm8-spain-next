@@ -6,7 +6,7 @@ export const ProjectCard = () => {
 
   return (
     <div
-      className={` ${isHovered ? "w-1/2" : "w-1/3"} transition-all duration-300`}
+      className={` ${isHovered ? "w-full sm:w-1/2" : " w-full sm:w-1/3"} transition-all duration-300`}
     >
       <div
         onMouseEnter={() => setIsHovered(true)}

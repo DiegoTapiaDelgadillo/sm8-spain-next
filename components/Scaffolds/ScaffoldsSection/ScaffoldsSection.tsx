@@ -1,3 +1,4 @@
+import type { SectionAnchorProps } from "@/types/shared/section/section";
 import { MainButton } from "@/components/shared/Buttons/MainButton/MainButton";
 import { Section } from "@/components/shared/Section/Section";
 import { IndustryFigure } from "../IndustryFigure/IndustryFigure";
@@ -5,7 +6,7 @@ import { ScaffoldFigure } from "../ScaffoldFigure/ScaffoldFigure";
 import { ConstructionFigure } from "../ConstructionFigure/ConstructionFigure";
 import { DocumentTextSvg } from "@/components/shared/Icons/DocumentText";
 
-export const ScaffoldsSection = () => {
+export const ScaffoldsSection = ({ id }: SectionAnchorProps) => {
   const infoSection = [
     {
       category: "Restauración",
@@ -32,10 +33,10 @@ export const ScaffoldsSection = () => {
 
   return (
     <>
-      <Section>
+      <Section id={id}>
         <div className=" flex justify-center items-center">
-          <div className=" bg-blue-500/10 py-2 px-8 rounded-xl">
-            <p className=" text-white text-sm">
+          <div className=" bg-blue-500/10 py-2 px-8 rounded-xl mb-12">
+            <p className=" text-center sm:text-start text-white text-sm">
               El Sistema Multidireccional SM8 se adapta a cualquier tipo de
               proyecto gracias a la geometría de su roseta octogonal
             </p>
@@ -43,7 +44,10 @@ export const ScaffoldsSection = () => {
         </div>
         <div className=" grid gap-24">
           {infoSection.map((section, index) => (
-            <div className=" grid grid-cols-2 gap-4 items-center" key={index}>
+            <div
+              className=" grid xl:grid-cols-2 gap-4 items-center"
+              key={index}
+            >
               {section.ilustration}
               <div>
                 <h3 className=" text-yellow-400">
