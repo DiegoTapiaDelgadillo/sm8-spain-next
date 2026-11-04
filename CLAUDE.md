@@ -7,7 +7,7 @@
 1. **Empieza SIEMPRE cada respuesta con "Diego,"**. Aplica a todas las salidas: avisos antes de usar herramientas, actualizaciones intermedias y respuesta final. Ejemplos: "Diego, empecé a revisar el proyecto…", "Diego, lancé al subagente…", "Diego, terminé la tarea…".
 2. **Si algo no está claro, pregunta antes de implementar.** Ante dudas de contenido, diseño, alcance o decisiones técnicas sin respuesta en este archivo, haz las preguntas correspondientes (AskUserQuestion) en vez de suponer. Nunca inventes contenido real (teléfonos, testimonios, clientes, proyectos).
 3. Responde en español.
-4. **`main` es producción y solo Diego la toca.** Ningún agente ni subagente hace merge, rebase, push o commit directo a `main`, ni despliega a producción, sin autorización explícita de Diego en ese momento. Se trabaja siempre en ramas de tarea; los PR hacia `main` los revisa y fusiona Diego.
+4. **`develop` es integración y `main` es producción; las dos las fusiona solo Diego.** Ningún agente ni subagente hace merge, rebase, push o commit directo a `develop` o `main`, ni despliega a producción, sin autorización explícita de Diego en ese momento. Se trabaja siempre en ramas de tarea que salen de `develop`; los PR van a `develop` y los revisa y fusiona Diego. Cuando lo de `develop` está aprobado y listo, Diego lo pasa a `main` (PR `develop` → `main`).
 5. **Toda implementación nueva sigue el "Flujo de implementación con specs"** (sección siguiente). Sin spec aprobado por Diego no se implementa, salvo los cambios pequeños descritos allí.
 
 ## Flujo de implementación con specs
@@ -22,14 +22,14 @@ El Frontend Lead (sesión principal) sigue estos pasos en orden para cada funcio
    - Ejemplo: `00_navbar_responsive_spec.md`.
    - Parte de la plantilla `specs/_TEMPLATE.md`.
 5. **Pedir aprobación.** Muestra a Diego un resumen del spec y **espera su OK** (o sus cambios) antes de implementar.
-6. **Implementar por fases.** Crea la rama de la tarea (`feat/…`, `fix/…`) desde `main` y lanza a cada subagente con su fase, indicándole la ruta del spec. Cada tarea es una casilla `- [ ]` que se marca `- [x]` al completarse:
+6. **Implementar por fases.** Crea la rama de la tarea (`feat/…`, `fix/…`) desde `develop` actualizado y lanza a cada subagente con su fase, indicándole la ruta del spec. Cada tarea es una casilla `- [ ]` que se marca `- [x]` al completarse:
    - El subagente marca sus propias casillas al terminar (excepto `qa-a11y-reviewer`, que no edita archivos: el Lead marca las casillas de QA según su informe).
    - El Lead verifica el informe y marca la casilla de cierre de cada fase.
    - Si algo cambia durante la implementación, se actualiza el spec (sección "Cambios sobre el plan").
 7. **Cerrar.** Con todas las casillas marcadas y la revisión de `qa-a11y-reviewer` aprobada:
    - Rellena la sección "Resumen final" del spec con los cambios realizados.
    - Actualiza este `CLAUDE.md` con lo más relevante (decisiones nuevas, componentes nuevos, convenciones, pendientes resueltos o nuevos).
-   - Da a Diego un resumen claro de los cambios y da por terminada la implementación. El merge a `main` lo decide Diego (regla 4).
+   - Da a Diego un resumen claro de los cambios y da por terminada la implementación. El PR va a `develop`; el merge a `develop` y el paso a `main` los decide Diego (regla 4).
 
 **Cambios pequeños sin spec:** una errata, un color, un texto puntual o un ajuste mínimo en un solo archivo se pueden hacer directamente. Si hay duda de si un cambio es "pequeño", pregunta a Diego.
 
@@ -42,13 +42,13 @@ Rediseño del sitio real https://www.sm8.es/ (alquiler y montaje de andamios mul
 | Tema | Decisión |
 |---|---|
 | Estructura | **Solo landing** (`app/page.tsx`) con secciones y anclas `#inicio`, `#andamios`, `#proyectos`, `#certificaciones`, `#contacto` (los `id` se pasan como prop desde `app/page.tsx`; los enlaces viven en el array `links` de `app/layout.tsx`, compartido por Navbar y Footer). Scroll suave global (`globals.css` + `data-scroll-behavior="smooth"` en `<html>`), desactivado con `prefers-reduced-motion`. Las rutas del sitio viejo (`/andamio-multidireccional`, `/nosotros`, `/contacto`) deben redirigir a la home (redirects en `next.config.ts`) cuando se despliegue. |
-| Deploy | **Vercel**. Los despliegues a producción los hace **solo Diego** (ver regla 4). No hay subagente de DevOps/despliegue. |
+| Deploy | **Vercel** (producción = `main`). **Todavía no se ha desplegado nada**; Diego avisará cuando lo haga. Los despliegues a producción los hace **solo Diego** (ver regla 4). No hay subagente de DevOps/despliegue. |
 | Responsive | **Mobile-first obligatorio**: todo componente nuevo o modificado debe funcionar en móvil, tablet y escritorio. Nada de paddings fijos gigantes sin breakpoints (ej. `px-80` → `px-4 md:px-12 lg:px-48`). |
 | Idioma | **Solo español de España (es-ES)** (`<html lang="es">`, `og:locale es_ES`). Sin i18n. El público objetivo está en España (Madrid): todo el contenido usa vocabulario peninsular ("móvil", "ordenador", "presupuesto"), tuteo y "vosotros" para el plural, formatos españoles (`+34`, `1.234,56 €`, `dd/mm/aaaa`, coma decimal) y nada de latinoamericanismos ni mexicanismos. Ver `.claude/agents/content-seo-specialist.md`. |
 | Tema | **Solo oscuro.** |
 | Contenido | **Lo proporciona Diego.** Mantener placeholders hasta recibir el contenido definitivo; no copiar ni inventar datos. |
 | Formulario de contacto | **Pendiente de decidir** (opciones: Server Action + Resend, servicio externo, WhatsApp/mailto). Preguntar antes de implementar el envío. |
-| Git | **Ramas por tarea + PR**: `feat/...`, `fix/...`, `chore/...` desde `main`. Conventional Commits (`feat: ...`). Claude no hace commit ni push si Diego no lo pide. **Prohibido hacer merge a `main` sin autorización de Diego.** |
+| Git | **Git flow simplificado**: `develop` = integración continua, `main` = producción. Ramas por tarea `feat/...`, `fix/...`, `chore/...` desde `develop` → PR a `develop` → cuando está aprobado y listo, PR `develop` → `main`. Tras el merge, la rama de tarea se borra. Conventional Commits (`feat: ...`). Claude no hace commit ni push si Diego no lo pide. **Prohibido hacer merge a `develop` o `main` sin autorización de Diego.** |
 
 ## Equipo de agentes
 
@@ -63,7 +63,7 @@ La **sesión principal actúa como Frontend Lead**: planifica, divide el trabajo
 | `content-seo-specialist` | Content & SEO Specialist (es-ES) | textos, `metadata`, `sitemap.ts`, `robots.ts`, JSON-LD |
 | `qa-a11y-reviewer` | QA & Accessibility Reviewer | solo lectura: lint/tsc/build, WCAG 2.2 AA, responsive |
 
-Flujo: Lead crea rama `feat/...` → asigna a subagentes → `qa-a11y-reviewer` revisa → Lead corrige/integra → Diego revisa el PR y decide el merge a `main`. No hay subagente de despliegue. Los subagentes no hacen commits; los hace el Lead solo si Diego lo pide.
+Flujo: Lead crea rama `feat/...` → asigna a subagentes → `qa-a11y-reviewer` revisa → Lead corrige/integra → Diego revisa el PR a `develop` y decide el merge → cuando está listo, Diego pasa `develop` a `main`. No hay subagente de despliegue. Los subagentes no hacen commits; los hace el Lead solo si Diego lo pide.
 
 ## Stack
 
