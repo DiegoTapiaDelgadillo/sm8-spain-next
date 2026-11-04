@@ -19,13 +19,25 @@ const dm_sans = Mona_Sans({
   variable: "--font-body",
 });
 
+const links = [
+  { href: "#inicio", text: "Inicio" },
+  { href: "#andamios", text: "Andamios" },
+  { href: "#proyectos", text: "Proyectos" },
+  { href: "#certificaciones", text: "Certificaciones" },
+  { href: "#contacto", text: "Contacto" },
+];
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${montserrat.variable} ${dm_sans.variable}`}>
+    <html
+      lang="en"
+      data-scroll-behavior="smooth"
+      className={`${montserrat.variable} ${dm_sans.variable}`}
+    >
       <body className=" bg-black">
-        <Navbar />
+        <Navbar links={links} />
         {children}
-        <Footer />
+        <Footer links={links} />
       </body>
     </html>
   );

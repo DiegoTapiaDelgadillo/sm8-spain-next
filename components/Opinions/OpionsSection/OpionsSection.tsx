@@ -32,7 +32,7 @@ export const OpionsSection = () => {
         titleClassName=" text-center"
         subtitleClassName=" text-center"
       />
-      <div className=" grid grid-cols-3 gap-4 mt-12">
+      <div className=" grid lg:grid-cols-3 gap-4 mt-12">
         {optionArray.map((opion, index) => (
           <OpionCard
             key={index}

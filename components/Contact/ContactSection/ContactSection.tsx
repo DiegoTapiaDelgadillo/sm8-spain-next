@@ -1,31 +1,34 @@
+import type { SectionAnchorProps } from "@/types/shared/section/section";
 import { CertItem } from "@/components/Certifications/CertItem/CertItem";
 import { Section } from "@/components/shared/Section/Section";
 import { Titles } from "@/components/shared/Titles/Titles";
-import { ShieldSvg } from "@/components/shared/Icons/ShieldSvg";
 import { ContactForm } from "../ContactForm/ContactForm";
+import { MapPin } from "@/components/shared/Icons/MapPin";
+import { PhoneSvg } from "@/components/shared/Icons/PhoneSvg";
+import { EnvelopeSvg } from "@/components/shared/Icons/EnvelopeSvg";
 
-export const ContactSection = () => {
+export const ContactSection = ({ id }: SectionAnchorProps) => {
   const items = [
     {
       title: "Dirección",
-      description: "+54 11 1234-5678",
-      icon: <ShieldSvg className=" w-12 stroke-yellow-500" />,
+      description: "Av. de Manoteras 38, Chamartín, Madrid, España, 28050",
+      icon: <MapPin className=" w-12 stroke-yellow-500" />,
     },
     {
       title: "Teléfono",
-      description: "+54 11 1234-5678",
-      icon: <ShieldSvg className=" w-12 stroke-yellow-500" />,
+      description: "+34 616 74 02 90",
+      icon: <PhoneSvg className=" w-12 stroke-yellow-500" />,
     },
     {
-      title: "email",
-      description: "+54 11 1234-5678",
-      icon: <ShieldSvg className=" w-12 stroke-yellow-500" />,
+      title: "Correo electrónico",
+      description: "info@sm8.es",
+      icon: <EnvelopeSvg className=" w-12 stroke-yellow-500" />,
     },
   ];
 
   return (
-    <Section>
-      <div className=" grid grid-cols-2 gap-12">
+    <Section id={id}>
+      <div className=" grid lg:grid-cols-2 gap-12">
         <div className="grid gap-2 items-start">
           <Titles
             titleClassName="text-start"
