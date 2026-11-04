@@ -1,4 +1,5 @@
 import { MainButton } from "@/components/shared/Buttons/MainButton/MainButton";
+import { DownloadSvg } from "@/components/shared/Icons/Download";
 import { Section } from "@/components/shared/Section/Section";
 import { Titles } from "@/components/shared/Titles/Titles";
 
@@ -18,7 +19,7 @@ export const ManualSection = () => {
       </div>
 
       <div className=" w-full flex justify-center">
-        <MainButton text="Descargar" />
+        <MainButton icon={<DownloadSvg className="w-4" />} text="Descargar" />
       </div>
     </Section>
   );

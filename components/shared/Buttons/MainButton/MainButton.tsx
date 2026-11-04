@@ -7,7 +7,7 @@ export const MainButton = (props: ButtonProps) => {
       onClick={props.onClick}
       type={props.type}
     >
-      <div className=" flex justify-center gap-2">
+      <div className=" flex justify-center gap-1 items-center">
         {props.icon}
         <p>{props.text}</p>
       </div>
