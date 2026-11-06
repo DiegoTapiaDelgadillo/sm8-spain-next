@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+  type Ref,
+} from "react";
 import "./iso-figure.css";
 
 /** Datos de una figura isométrica que se monta por pasos (generados por andamio/gen-next.mjs). */
@@ -14,11 +20,38 @@ export type IsoBuildData = {
   caption: string;
 };
 
+/** Control externo de la figura en `mode="scroll"`. */
+export type IsoBuildHandle = {
+  /**
+   * Pinta el montaje en el progreso `p` (float de 0 a `steps.length - 1`; se recorta a ese rango).
+   * Escribe directamente en el SVG, sin re-render de React. Si el SVG aún no ha cargado,
+   * guarda el valor y lo pinta en cuanto llega. En `mode="auto"` no hace nada.
+   */
+  setProgress: (p: number) => void;
+};
+
+export type IsoBuildMode = "auto" | "scroll";
+
 export type IsoBuildFigureProps = {
   data: IsoBuildData;
   showCaption?: boolean;
   className?: string;
+  /**
+   * `"auto"` (por defecto): bucle de montaje automático + ratón, clic y teclado (`role="slider"`).
+   * `"scroll"`: sin bucle ni interacción propia; el padre marca el progreso con `ref.setProgress`.
+   * Es una imagen (`role="img"`) que empieza en el paso 0 (solo la base).
+   */
+  mode?: IsoBuildMode;
+  /**
+   * Carga el SVG ya, sin esperar a que la figura se acerque a la pantalla (por defecto la
+   * carga un IntersectionObserver con 400 px de margen). Puede pasar de `false` a `true`
+   * en cualquier momento: así el padre decide cuándo precargar (p. ej. al acercarse la sección).
+   */
+  eager?: boolean;
+  ref?: Ref<IsoBuildHandle>;
 };
+
+type StepGroup = { g: SVGGElement; s: number };
 
 const DROP_CM = 80; // cada nivel cae desde 80 cm por encima de su sitio
 const TOUR_SECONDS = 12;
@@ -32,36 +65,135 @@ const ease = (t: number) => (t <= 0 ? 0 : t >= 1 ? 1 : 1 - Math.pow(1 - t, 3));
 const clamp = (v: number, lo: number, hi: number) =>
   Math.max(lo, Math.min(hi, v));
 
+const collectGroups = (root: ParentNode): StepGroup[] =>
+  Array.from(root.querySelectorAll<SVGGElement>("svg [data-step]")).map(
+    (g) => ({ g, s: Number(g.dataset.step) }),
+  );
+
+/**
+ * Pinta los grupos `[data-step]` para el progreso `p`: cada grupo cae desde DROP_CM y aparece
+ * con fundido (ease-out cúbico) mientras `p` recorre su tramo. Si `p === drawn` no toca el DOM.
+ * Devuelve el progreso pintado para pasarlo como `drawn` en la siguiente llamada.
+ */
+const paintSteps = (
+  groups: readonly StepGroup[],
+  p: number,
+  screenPerCmUp: number,
+  drawn: number | null,
+): number => {
+  if (drawn === p) return p;
+  for (const { g, s } of groups) {
+    const e = ease(p - s + 1);
+    if (e <= 0) {
+      g.style.display = "none";
+      continue;
+    }
+    g.style.display = "";
+    g.setAttribute("opacity", e.toFixed(3));
+    const dy = screenPerCmUp * DROP_CM * (1 - e);
+    if (e >= 1) g.removeAttribute("transform");
+    else g.setAttribute("transform", `translate(0 ${dy.toFixed(2)})`);
+  }
+  return p;
+};
+
+// Una sola descarga por SVG aunque haya varias instancias o el efecto se repita (StrictMode).
+const svgCache = new Map<string, Promise<string>>();
+const fetchSvg = (url: string) => {
+  let pending = svgCache.get(url);
+  if (!pending) {
+    pending = fetch(url).then((r) => {
+      if (!r.ok) throw new Error(`${r.status} ${url}`);
+      return r.text();
+    });
+    pending.catch(() => svgCache.delete(url));
+    svgCache.set(url, pending);
+  }
+  return pending;
+};
+
 export const IsoBuildFigure = ({
   data,
   showCaption = true,
   className = "",
+  mode = "auto",
+  eager = false,
+  ref,
 }: IsoBuildFigureProps) => {
   const { svgUrl, screenPerCmUp, steps, ariaLabel, sliderLabel, caption } = data;
   const LAST = steps.length - 1;
+  const scroll = mode === "scroll";
   const stageRef = useRef<HTMLDivElement>(null);
   const artRef = useRef<HTMLDivElement>(null);
   const readoutRef = useRef<HTMLSpanElement>(null);
   const [loaded, setLoaded] = useState(false);
+  // Modo scroll: progreso pedido por el padre y estado de pintado (grupos + último valor pintado).
+  const progressRef = useRef(0);
+  const controlledRef = useRef<{
+    groups: StepGroup[];
+    drawn: number | null;
+  } | null>(null);
 
-  // 1 · Carga el dibujo (≈130 KB comprimido) solo cuando la figura se acerca a la pantalla.
+  useImperativeHandle(
+    ref,
+    () => ({
+      setProgress: (p: number) => {
+        if (!scroll) return;
+        progressRef.current = clamp(Number.isFinite(p) ? p : 0, 0, LAST);
+        const c = controlledRef.current;
+        if (c)
+          c.drawn = paintSteps(
+            c.groups,
+            progressRef.current,
+            screenPerCmUp,
+            c.drawn,
+          );
+      },
+    }),
+    [scroll, LAST, screenPerCmUp],
+  );
+
+  // 1 · Carga el dibujo (≈130 KB comprimido) cuando la figura se acerca a la pantalla, o ya si `eager`.
   useEffect(() => {
     const stage = stageRef.current;
     const art = artRef.current;
     if (!stage || !art) return;
     let cancelled = false;
+
+    const load = () =>
+      fetchSvg(svgUrl)
+        .then((svg) => {
+          if (cancelled) return;
+          if (art.dataset.src !== svgUrl) {
+            art.innerHTML = svg;
+            art.dataset.src = svgUrl;
+          }
+          if (scroll) {
+            // Pinta en el mismo tick de la inyección para no enseñar un frame del andamio completo.
+            const groups = collectGroups(art);
+            controlledRef.current = {
+              groups,
+              drawn: paintSteps(groups, progressRef.current, screenPerCmUp, null),
+            };
+          } else {
+            controlledRef.current = null;
+          }
+          setLoaded(true);
+        })
+        .catch(() => undefined);
+
+    if (eager) {
+      load();
+      return () => {
+        cancelled = true;
+      };
+    }
+
     const io = new IntersectionObserver(
       (entries) => {
         if (!entries[entries.length - 1].isIntersecting) return;
         io.disconnect();
-        fetch(svgUrl)
-          .then((r) => r.text())
-          .then((svg) => {
-            if (cancelled) return;
-            art.innerHTML = svg;
-            setLoaded(true);
-          })
-          .catch(() => undefined);
+        load();
       },
       { rootMargin: "400px 0px" },
     );
@@ -70,22 +202,17 @@ export const IsoBuildFigure = ({
       cancelled = true;
       io.disconnect();
     };
-  }, [svgUrl]);
+  }, [svgUrl, eager, scroll, screenPerCmUp]);
 
-  // 2 · Animación de montaje: un único bucle que escribe atributos, sin re-renderizar React.
+  // 2 · Modo auto: un único bucle que escribe atributos, sin re-renderizar React.
   useEffect(() => {
-    if (!loaded) return;
+    if (!loaded || scroll) return;
     const stage = stageRef.current!;
     const svg = artRef.current!.querySelector("svg");
     const readout = readoutRef.current;
     if (!svg) return;
 
-    const groups = Array.from(
-      svg.querySelectorAll<SVGGElement>("[data-step]"),
-    ).map((g) => ({
-      g,
-      s: Number(g.dataset.step),
-    }));
+    const groups = collectGroups(artRef.current!);
     const still = window.matchMedia("(prefers-reduced-motion: reduce)");
 
     let p = LAST;
@@ -99,21 +226,7 @@ export const IsoBuildFigure = ({
     let drawn: number | null = null;
 
     const paint = () => {
-      if (drawn !== p) {
-        for (const { g, s } of groups) {
-          const e = ease(p - s + 1);
-          if (e <= 0) {
-            g.style.display = "none";
-            continue;
-          }
-          g.style.display = "";
-          g.setAttribute("opacity", e.toFixed(3));
-          const dy = screenPerCmUp * DROP_CM * (1 - e);
-          if (e >= 1) g.removeAttribute("transform");
-          else g.setAttribute("transform", `translate(0 ${dy.toFixed(2)})`);
-        }
-        drawn = p;
-      }
+      drawn = paintSteps(groups, p, screenPerCmUp, drawn);
       const text = steps[clamp(Math.round(p), 0, LAST)];
       if (readout && readout.textContent !== text) readout.textContent = text;
     };
@@ -202,7 +315,19 @@ export const IsoBuildFigure = ({
       stage.removeEventListener("click", onClick);
       stage.removeEventListener("keydown", onKey);
     };
-  }, [loaded, LAST, screenPerCmUp, steps]);
+  }, [loaded, scroll, LAST, screenPerCmUp, steps]);
+
+  const stageA11y = scroll
+    ? { role: "img", "aria-label": ariaLabel }
+    : {
+        tabIndex: 0,
+        role: "slider",
+        "aria-label": sliderLabel,
+        "aria-valuemin": 0,
+        "aria-valuemax": LAST,
+        "aria-valuenow": LAST,
+        "aria-valuetext": steps[LAST],
+      };
 
   return (
     <figure className={`m-0 ${className}`}>
@@ -213,18 +338,16 @@ export const IsoBuildFigure = ({
         ></div>
         <div
           ref={stageRef}
-          tabIndex={0}
-          role="slider"
-          aria-label={sliderLabel}
-          aria-valuemin={0}
-          aria-valuemax={LAST}
-          aria-valuenow={LAST}
-          aria-valuetext={steps[LAST]}
-          className="relative mx-auto aspect-square w-full max-w-150 cursor-pointer touch-pan-y rounded-lg outline-none focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-neutral-500"
+          {...stageA11y}
+          className={`relative mx-auto aspect-square w-full max-w-150 rounded-lg ${
+            scroll
+              ? ""
+              : "cursor-pointer touch-pan-y outline-none focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-neutral-500"
+          }`}
         >
           <div
             ref={artRef}
-            aria-label={ariaLabel}
+            aria-label={scroll ? undefined : ariaLabel}
             className="h-full w-full"
           />
           {!loaded && (
