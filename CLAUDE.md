@@ -121,7 +121,10 @@ specs/          planes de implementación NN_nombre_spec.md (plantilla: specs/_T
 
 - `andamio/*.mjs` modelan las figuras (fachada `fig2.mjs`, obra `obra.mjs`, industria `industria.mjs`, nudo de roseta `fig1.mjs`) con el kit del skill **anatomy** (`~/.claude/skills/anatomy`, rutas absolutas en los scripts).
 - `node andamio/gen-next.mjs` regenera `public/figures/*.svg`, `components/Scaffolds/*/…FigureData.ts` y `components/Scaffolds/IsoBuildFigure/iso-figure.css`. **Esos archivos generados no se editan a mano**: cambiar el modelo y regenerar.
-- `IsoBuildFigure` (cliente) carga el SVG en diferido con IntersectionObserver y anima el montaje por pasos.
+- `IsoBuildFigure` (cliente) carga el SVG en diferido con IntersectionObserver y anima el montaje por pasos. Tiene dos modos:
+  - `mode="auto"` (por defecto): bucle automático con ratón, clic y teclado.
+  - `mode="scroll"`: lo controla el padre con `ref.setProgress(p)`. Acepta además `eager` para precargar.
+- La sección Andamios usa `components/Scaffolds/ScaffoldsScroll/ScaffoldsScroll.tsx`, una escena fijada guiada por scroll con `useScrollProgress`. La velocidad (`STEP_VH=60`, `PAUSE_VH=30`, `FADE_VH=45`) está aprobada por Diego. Con `prefers-reduced-motion` se muestra apilado y estático. El ancla `#andamios` vive en su contenedor, no en `<Section>`. Detalle en `specs/01_scaffolds_scroll_animation_spec.md`.
 - `andamio/shots/` son capturas de referencia locales, fuera de git.
 
 ## Datos del negocio (referencia del sitio actual — usar solo si Diego lo confirma)
@@ -136,9 +139,13 @@ specs/          planes de implementación NN_nombre_spec.md (plantilla: specs/_T
 
 - Contenido de relleno a sustituir cuando Diego lo pase: testimonios (`OpionsSection`), datos de contacto (`ContactSection` tiene +54 y textos repetidos), logos de clientes, tarjetas de proyectos, imagen/PDF de la ficha técnica (`ManualSection`), caja vacía en Certificaciones, redes en Footer.
 - `app/layout.tsx`: metadata por defecto ("Create Next App") y `lang="en"` → cambiar a `es` y SEO real. Hay un espacio de más en `variable: "--font-heading "`.
-- Responsive de las secciones (spec 01): `Section` tiene `px-48` fijo y `ClientsSection` `px-120` → scroll horizontal en móvil. Logos de `ClientsSection` con proporción incorrecta (aviso de `next/image`).
+- Responsive de las secciones (próximo spec libre, `02`): `Section` tiene `px-48` fijo y `ClientsSection` `px-120` → scroll horizontal en móvil. Logos de `ClientsSection` con proporción incorrecta (aviso de `next/image`).
 - `BurgerSvg` y `CloseSvg` ya no se usan; confirmar con Diego si se borran.
 - Footer: copyright dice 2027 y "All rights reserved." en inglés; "Menu" sin tilde.
 - Typos en nombres: `Opion*` (→ `Opinion*`), `Enlance` (→ `Enlace`), `CertificationSection.tsx`, "Apuntalamineto". Confirmar con Diego antes de renombrar.
 - Decidir el envío del formulario de contacto.
+- Andamios (spec 01):
+  - Falta probar el scroll en un móvil real o con CPU 4×.
+  - Los botones "Solicitar presupuesto" no llevan a ningún sitio.
+  - El viewBox de los SVG tiene aire alrededor del dibujo.
 - Redirects de rutas viejas al desplegar en Vercel.
