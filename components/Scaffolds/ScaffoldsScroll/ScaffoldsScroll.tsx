@@ -98,7 +98,7 @@ const clearFrame = (el: HTMLElement | null) => {
  * paso a paso y se pasa a la siguiente con un fundido cruzado. Con `prefers-reduced-motion`
  * se muestra apilado y estático (todo el cambio de layout va por CSS `motion-reduce:`).
  */
-export const ScaffoldsScroll = ({ categories, id }: ScaffoldsScrollProps) => {
+export const ScaffoldsScroll = ({ categories }: ScaffoldsScrollProps) => {
   const n = categories.length;
   const total = travelVh(n);
   const reduced = useReducedMotion();
@@ -217,10 +217,9 @@ export const ScaffoldsScroll = ({ categories, id }: ScaffoldsScrollProps) => {
 
   return (
     <div
-      id={id}
       ref={containerRef}
       style={containerStyle}
-      className="relative h-(--scaffolds-h) scroll-mt-0 motion-reduce:h-auto motion-reduce:scroll-mt-20 motion-reduce:lg:scroll-mt-28"
+      className="relative h-(--scaffolds-h) motion-reduce:h-auto"
     >
       {/*
         Escena fijada. Por debajo de `xl` las filas son [hueco · texto · figura · hueco]: la figura
@@ -275,9 +274,9 @@ export const ScaffoldsScroll = ({ categories, id }: ScaffoldsScrollProps) => {
                   <p className="text-sm text-yellow-400 sm:text-base">
                     0{i + 1} {item.category}
                   </p>
-                  <h2 className="mt-2 text-2xl font-bold text-white [font-family:var(--font-heading),serif] sm:text-3xl xl:mt-6 xl:text-4xl motion-safe:[@media(orientation:landscape)_and_(max-height:35rem)_and_(max-width:80rem)]:mt-1 motion-safe:[@media(orientation:landscape)_and_(max-height:35rem)_and_(max-width:80rem)]:text-xl">
+                  <h3 className="mt-2 text-2xl font-bold text-white sm:text-3xl xl:mt-6 xl:text-4xl motion-safe:[@media(orientation:landscape)_and_(max-height:35rem)_and_(max-width:80rem)]:mt-1 motion-safe:[@media(orientation:landscape)_and_(max-height:35rem)_and_(max-width:80rem)]:text-xl">
                     {item.title}
-                  </h2>
+                  </h3>
                   <p className="mt-2 mb-4 text-sm text-neutral-400 sm:text-base xl:mb-6 motion-safe:[@media(orientation:landscape)_and_(max-height:35rem)_and_(max-width:80rem)]:mb-3 motion-safe:[@media(orientation:landscape)_and_(max-height:35rem)_and_(max-width:80rem)]:text-sm">
                     {item.description}
                   </p>
@@ -287,6 +286,7 @@ export const ScaffoldsScroll = ({ categories, id }: ScaffoldsScrollProps) => {
                   <MainButton
                     icon={<DocumentTextSvg className=" w-4" />}
                     text="Solicitar presupuesto"
+                    href="#contacto"
                   />
                 </div>
               </div>

@@ -11,7 +11,7 @@ export const OpionCard = (props: OpinionCardProps) => {
         </div>
         <div>
           <p className=" text-white text-sm">{props.name}</p>
-          <p className=" text-neutral-500 text-xs">{props.position}</p>
+          <p className=" text-neutral-400 text-xs">{props.position}</p>
         </div>
       </div>
     </div>

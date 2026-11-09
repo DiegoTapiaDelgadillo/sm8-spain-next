@@ -7,6 +7,8 @@ export const TextArea = (props: TextAreaProps) => {
         {props.label}
       </label>
       <textarea
+        id={props.name}
+        name={props.name}
         placeholder={props.placeholder}
         value={props.value}
         onChange={props.onChange}

@@ -1,15 +1,28 @@
 @import "tailwindcss";
 
-body {
-  font-family: var(--font-body), sans-serif;
+@theme inline {
+  /* `font-text`: Mona Sans (next/font define --font-body en <html>). Para títulos en gris
+     (`text-neutral-400`), que van con la tipografía de texto. */
+  --font-text: var(--font-body), sans-serif;
 }
 
-p {
-  font-family: var(--font-body), sans-serif;
-}
+/* En `@layer base` para que las utilidades (`font-text`) puedan sobrescribirlas. */
+@layer base {
+  body,
+  p {
+    font-family: var(--font-body), sans-serif;
+  }
 
-h1 {
-  font-family: var(--font-heading), serif;
+  /* Todos los títulos en Montserrat. */
+  h1 {
+    font-family: var(--font-heading), serif;
+  }
+  h2 {
+    font-family: var(--font-heading), serif;
+  }
+  h3 {
+    font-family: var(--font-heading), serif;
+  }
 }
 
 html {
@@ -19,5 +32,31 @@ html {
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+}
+
+/* Collapse (<details>): apertura animada donde hay soporte de ::details-content
+   e interpolate-size; sin soporte, abre y cierra al instante. */
+@supports selector(::details-content) {
+  .collapse-details {
+    interpolate-size: allow-keywords;
+  }
+
+  .collapse-details::details-content {
+    block-size: 0;
+    overflow-y: clip;
+    transition:
+      block-size 300ms ease,
+      content-visibility 300ms allow-discrete;
+  }
+
+  .collapse-details[open]::details-content {
+    block-size: auto;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .collapse-details::details-content {
+      transition: none;
+    }
   }
 }

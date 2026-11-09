@@ -27,8 +27,8 @@ export const OpionsSection = () => {
   return (
     <Section>
       <Titles
-        title="La opinión de quienes ya han trabajado con SM8"
-        subtitle="Nuestra política de calidad mantiene el equipo en perfecto estado, cuidando ante todo la seguridad en cada andamio instalado."
+        title="Opiniones de clientes de SM8 España"
+        subtitle="Lo que dicen las empresas que ya han trabajado con nosotros."
         titleClassName=" text-center"
         subtitleClassName=" text-center"
       />
