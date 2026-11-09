@@ -7,7 +7,7 @@
 1. **Empieza SIEMPRE cada respuesta con "Diego,"**. Aplica a todas las salidas: avisos antes de usar herramientas, actualizaciones intermedias y respuesta final. Ejemplos: "Diego, empecé a revisar el proyecto…", "Diego, lancé al subagente…", "Diego, terminé la tarea…".
 2. **Si algo no está claro, pregunta antes de implementar.** Ante dudas de contenido, diseño, alcance o decisiones técnicas sin respuesta en este archivo, haz las preguntas correspondientes (AskUserQuestion) en vez de suponer. Nunca inventes contenido real (teléfonos, testimonios, clientes, proyectos).
 3. Responde en español.
-4. **`main` es producción y solo Diego la toca.** Ningún agente ni subagente hace merge, rebase, push o commit directo a `main`, ni despliega a producción, sin autorización explícita de Diego en ese momento. Se trabaja siempre en ramas de tarea; los PR hacia `main` los revisa y fusiona Diego.
+4. **`develop` es integración y `main` es producción; las dos las fusiona solo Diego.** Ningún agente ni subagente hace merge, rebase, push o commit directo a `develop` o `main`, ni despliega a producción, sin autorización explícita de Diego en ese momento. Se trabaja siempre en ramas de tarea que salen de `develop`; los PR van a `develop` y los revisa y fusiona Diego. Cuando lo de `develop` está aprobado y listo, Diego lo pasa a `main` (PR `develop` → `main`).
 5. **Toda implementación nueva sigue el "Flujo de implementación con specs"** (sección siguiente). Sin spec aprobado por Diego no se implementa, salvo los cambios pequeños descritos allí.
 
 ## Flujo de implementación con specs
@@ -22,14 +22,14 @@ El Frontend Lead (sesión principal) sigue estos pasos en orden para cada funcio
    - Ejemplo: `00_navbar_responsive_spec.md`.
    - Parte de la plantilla `specs/_TEMPLATE.md`.
 5. **Pedir aprobación.** Muestra a Diego un resumen del spec y **espera su OK** (o sus cambios) antes de implementar.
-6. **Implementar por fases.** Crea la rama de la tarea (`feat/…`, `fix/…`) desde `main` y lanza a cada subagente con su fase, indicándole la ruta del spec. Cada tarea es una casilla `- [ ]` que se marca `- [x]` al completarse:
+6. **Implementar por fases.** Crea la rama de la tarea (`feat/…`, `fix/…`) desde `develop` actualizado y lanza a cada subagente con su fase, indicándole la ruta del spec. Cada tarea es una casilla `- [ ]` que se marca `- [x]` al completarse:
    - El subagente marca sus propias casillas al terminar (excepto `qa-a11y-reviewer`, que no edita archivos: el Lead marca las casillas de QA según su informe).
    - El Lead verifica el informe y marca la casilla de cierre de cada fase.
    - Si algo cambia durante la implementación, se actualiza el spec (sección "Cambios sobre el plan").
 7. **Cerrar.** Con todas las casillas marcadas y la revisión de `qa-a11y-reviewer` aprobada:
    - Rellena la sección "Resumen final" del spec con los cambios realizados.
    - Actualiza este `CLAUDE.md` con lo más relevante (decisiones nuevas, componentes nuevos, convenciones, pendientes resueltos o nuevos).
-   - Da a Diego un resumen claro de los cambios y da por terminada la implementación. El merge a `main` lo decide Diego (regla 4).
+   - Da a Diego un resumen claro de los cambios y da por terminada la implementación. El PR va a `develop`; el merge a `develop` y el paso a `main` los decide Diego (regla 4).
 
 **Cambios pequeños sin spec:** una errata, un color, un texto puntual o un ajuste mínimo en un solo archivo se pueden hacer directamente. Si hay duda de si un cambio es "pequeño", pregunta a Diego.
 
@@ -41,14 +41,16 @@ Rediseño del sitio real https://www.sm8.es/ (alquiler y montaje de andamios mul
 
 | Tema | Decisión |
 |---|---|
-| Estructura | **Solo landing** (`app/page.tsx`) con secciones y anclas `#inicio`, `#andamios`, `#proyectos`, `#certificaciones`, `#contacto` (los `id` se pasan como prop desde `app/page.tsx`; los enlaces viven en el array `links` de `app/layout.tsx`, compartido por Navbar y Footer). Scroll suave global (`globals.css` + `data-scroll-behavior="smooth"` en `<html>`), desactivado con `prefers-reduced-motion`. Las rutas del sitio viejo (`/andamio-multidireccional`, `/nosotros`, `/contacto`) deben redirigir a la home (redirects en `next.config.ts`) cuando se despliegue. |
-| Deploy | **Vercel**. Los despliegues a producción los hace **solo Diego** (ver regla 4). No hay subagente de DevOps/despliegue. |
+| Estructura | **Solo landing** (`app/page.tsx`) con secciones y anclas `#inicio`, `#andamios`, `#proyectos`, `#certificaciones`, `#preguntas-frecuentes` (fuera del menú), `#contacto` (los `id` se pasan como prop desde `app/page.tsx`; los enlaces viven en el array `links` de `app/layout.tsx`, compartido por Navbar y Footer). Scroll suave global (`globals.css` + `data-scroll-behavior="smooth"` en `<html>`), desactivado con `prefers-reduced-motion`. Las rutas del sitio viejo redirigen con 308 en `next.config.ts`: `/andamio-multidireccional` → `/#andamios`, `/nosotros` → `/`, `/contacto` → `/#contacto`. |
+| Deploy | **Vercel** (producción = `main`). **Todavía no se ha desplegado nada**; Diego avisará cuando lo haga. Los despliegues a producción los hace **solo Diego** (ver regla 4). No hay subagente de DevOps/despliegue. |
 | Responsive | **Mobile-first obligatorio**: todo componente nuevo o modificado debe funcionar en móvil, tablet y escritorio. Nada de paddings fijos gigantes sin breakpoints (ej. `px-80` → `px-4 md:px-12 lg:px-48`). |
 | Idioma | **Solo español de España (es-ES)** (`<html lang="es">`, `og:locale es_ES`). Sin i18n. El público objetivo está en España (Madrid): todo el contenido usa vocabulario peninsular ("móvil", "ordenador", "presupuesto"), tuteo y "vosotros" para el plural, formatos españoles (`+34`, `1.234,56 €`, `dd/mm/aaaa`, coma decimal) y nada de latinoamericanismos ni mexicanismos. Ver `.claude/agents/content-seo-specialist.md`. |
 | Tema | **Solo oscuro.** |
 | Contenido | **Lo proporciona Diego.** Mantener placeholders hasta recibir el contenido definitivo; no copiar ni inventar datos. |
+| SEO | Spec `specs/02_seo_onpage_landing_spec.md`. Zona objetivo **Comunidad de Madrid**; palabras clave principales "alquiler de andamios Madrid", "montaje de andamios Madrid", "andamio multidireccional". Servicios que se pueden nombrar: alquiler **con** montaje y desmontaje, venta del Sistema Multidireccional SM8 y gestión del PMUD y licencias. Un solo `h1` (hero). Metadata en `app/layout.tsx` (textos en `lib/seo/seo.ts`), JSON-LD en `app/page.tsx` (`lib/seo/jsonLd.ts`: `LocalBusiness` + `WebSite` + `FAQPage`), `app/sitemap.ts`, `app/robots.ts`, `app/opengraph-image.tsx`. **Solo datos oficiales**: nada de normativa, geo, horario ni reseñas sin confirmar. |
+| Datos del negocio | **Única fuente: `lib/business.ts`** (NAP, redes, webs del grupo, servicios), confirmados por Diego. No duplicar teléfono, email ni dirección en componentes. Copyright: "© {año} SM8. Todos los derechos reservados." |
 | Formulario de contacto | **Pendiente de decidir** (opciones: Server Action + Resend, servicio externo, WhatsApp/mailto). Preguntar antes de implementar el envío. |
-| Git | **Ramas por tarea + PR**: `feat/...`, `fix/...`, `chore/...` desde `main`. Conventional Commits (`feat: ...`). Claude no hace commit ni push si Diego no lo pide. **Prohibido hacer merge a `main` sin autorización de Diego.** |
+| Git | **Git flow simplificado**: `develop` = integración continua, `main` = producción. Ramas por tarea `feat/...`, `fix/...`, `chore/...` desde `develop` → PR a `develop` → cuando está aprobado y listo, PR `develop` → `main`. Tras el merge, la rama de tarea se borra. Conventional Commits (`feat: ...`). Claude no hace commit ni push si Diego no lo pide. **Prohibido hacer merge a `develop` o `main` sin autorización de Diego.** |
 
 ## Equipo de agentes
 
@@ -63,7 +65,7 @@ La **sesión principal actúa como Frontend Lead**: planifica, divide el trabajo
 | `content-seo-specialist` | Content & SEO Specialist (es-ES) | textos, `metadata`, `sitemap.ts`, `robots.ts`, JSON-LD |
 | `qa-a11y-reviewer` | QA & Accessibility Reviewer | solo lectura: lint/tsc/build, WCAG 2.2 AA, responsive |
 
-Flujo: Lead crea rama `feat/...` → asigna a subagentes → `qa-a11y-reviewer` revisa → Lead corrige/integra → Diego revisa el PR y decide el merge a `main`. No hay subagente de despliegue. Los subagentes no hacen commits; los hace el Lead solo si Diego lo pide.
+Flujo: Lead crea rama `feat/...` → asigna a subagentes → `qa-a11y-reviewer` revisa → Lead corrige/integra → Diego revisa el PR a `develop` y decide el merge → cuando está listo, Diego pasa `develop` a `main`. No hay subagente de despliegue. Los subagentes no hacen commits; los hace el Lead solo si Diego lo pide.
 
 ## Stack
 
@@ -93,7 +95,9 @@ components/
                                  Certifications, Manual, Opinions, Contact)
   <Seccion>/<Pieza>/…            subcomponentes de cada sección (CertItem, ProjectCard, …)
   shared/                        piezas reutilizables: Buttons, Forms, Icons, Navbar, Footer,
-                                 Section, Titles, Enlace
+                                 Section, Titles, Enlace, Collapse, CurrentYear
+  Faq/FaqSection/                preguntas frecuentes (textos en faqItems.ts, reutilizados en el JSON-LD)
+lib/            business.ts (datos del negocio), seo/ (seo.ts, jsonLd.ts)
 types/          interfaces de props, espejo de la estructura de components/
 public/         img/logo.webp, figures/*.svg (figuras isométricas)
 andamio/        generadores de las figuras isométricas (ver abajo)
@@ -106,12 +110,13 @@ specs/          planes de implementación NN_nombre_spec.md (plantilla: specs/_T
 - Props tipadas con `interface` en `types/...` (ej. `types/shared/button/buttonProps.ts`).
 - Server Components por defecto; `"use client"` solo cuando haya estado/efectos (ContactForm, ProjectCard, IsoBuildFigure).
 - Listas de contenido como arrays de objetos dentro del componente y `.map()`.
-- Envolver secciones con `<Section id?>` (lleva `scroll-mt` para la navbar fija; las secciones aceptan `SectionAnchorProps`) y títulos con `<Titles>`; botones con `MainButton` / `SecondaryButton` (`MainButton` con `href` renderiza un `<a>`, para enlazar a anclas); iconos SVG en `components/shared/Icons` (aceptan `className`).
+- Envolver secciones con `<Section id?>` (lleva `scroll-mt` para la navbar fija; las secciones aceptan `SectionAnchorProps`) y títulos con `<Titles>` (pinta `h2` por defecto, prop `as`; subtítulo en `<p>`); botones con `MainButton` / `SecondaryButton` (con `href` renderizan un `<a>`, para anclas o `tel:`); desplegables con `Collapse` (`<details>`/`<summary>`, Server Component); enlaces del footer con `Enlance` (`external`, `ariaLabel`); año dinámico con `CurrentYear` (`"use cache"`, necesario por `cacheComponents`); iconos SVG en `components/shared/Icons` (aceptan `className`).
 - Imágenes con `next/image`.
 
 ## Diseño visual
 
-- Fondo negro (`bg-black`), superficies `neutral-900/950`, bordes `neutral-800/900`, texto secundario `neutral-500` (en texto pequeño no llega a AA: los enlaces de Navbar/Footer usan `neutral-400`; revisar el resto del sitio). Texto de `MainButton` en `blue-400` por contraste.
+- Fondo negro (`bg-black`), superficies `neutral-900/950`, bordes `neutral-800/900`, **texto secundario `neutral-400`** (`neutral-500` da 4,43:1 y no llega a AA: no usarlo para texto; solo bordes y placeholders). Texto de `MainButton` en `blue-400` por contraste.
+- Tipografía: `h1`–`h3` en Montserrat desde `app/globals.css` (`@layer base`); texto en Mona Sans. Los títulos en gris (`text-neutral-400`) llevan `font-text` (Mona Sans).
 - Acento principal **amarillo** (`yellow-300/400/500`): categorías, iconos, palabras destacadas.
 - Acento de acción **azul** (`blue-500`): botones principales (borde + fondo `blue-500/30`, `rounded-full`).
 - Tarjetas `rounded-xl` con borde `neutral-800` y gradientes suaves (`bg-linear-to-b from-neutral-900/60 to-black`).
@@ -124,7 +129,7 @@ specs/          planes de implementación NN_nombre_spec.md (plantilla: specs/_T
 - `IsoBuildFigure` (cliente) carga el SVG en diferido con IntersectionObserver y anima el montaje por pasos. Tiene dos modos:
   - `mode="auto"` (por defecto): bucle automático con ratón, clic y teclado.
   - `mode="scroll"`: lo controla el padre con `ref.setProgress(p)`. Acepta además `eager` para precargar.
-- La sección Andamios usa `components/Scaffolds/ScaffoldsScroll/ScaffoldsScroll.tsx`, una escena fijada guiada por scroll con `useScrollProgress`. La velocidad (`STEP_VH=60`, `PAUSE_VH=30`, `FADE_VH=45`) está aprobada por Diego. Con `prefers-reduced-motion` se muestra apilado y estático. El ancla `#andamios` vive en su contenedor, no en `<Section>`. Detalle en `specs/01_scaffolds_scroll_animation_spec.md`.
+- La sección Andamios usa `components/Scaffolds/ScaffoldsScroll/ScaffoldsScroll.tsx`, una escena fijada guiada por scroll con `useScrollProgress`. La velocidad (`STEP_VH=60`, `PAUSE_VH=30`, `FADE_VH=45`) está aprobada por Diego. Con `prefers-reduced-motion` se muestra apilado y estático. El ancla `#andamios` va en `<Section id>` de `ScaffoldsSection` para que se vea el título de la sección (spec 02). Detalle en `specs/01_scaffolds_scroll_animation_spec.md`.
 - `andamio/shots/` son capturas de referencia locales, fuera de git.
 
 ## Datos del negocio (referencia del sitio actual — usar solo si Diego lo confirma)
@@ -137,15 +142,18 @@ specs/          planes de implementación NN_nombre_spec.md (plantilla: specs/_T
 
 ## Pendientes conocidos
 
-- Contenido de relleno a sustituir cuando Diego lo pase: testimonios (`OpionsSection`), datos de contacto (`ContactSection` tiene +54 y textos repetidos), logos de clientes, tarjetas de proyectos, imagen/PDF de la ficha técnica (`ManualSection`), caja vacía en Certificaciones, redes en Footer.
-- `app/layout.tsx`: metadata por defecto ("Create Next App") y `lang="en"` → cambiar a `es` y SEO real. Hay un espacio de más en `variable: "--font-heading "`.
-- Responsive de las secciones (próximo spec libre, `02`): `Section` tiene `px-48` fijo y `ClientsSection` `px-120` → scroll horizontal en móvil. Logos de `ClientsSection` con proporción incorrecta (aviso de `next/image`).
+- Contenido de relleno a sustituir cuando Diego lo pase: testimonios (`OpionsSection`), logos de clientes, tarjetas de proyectos, imagen/PDF de la ficha técnica (`ManualSection`, el botón "Descargar ficha técnica" no hace nada), caja vacía en Certificaciones, caja vacía (mapa) en Contacto.
+- Responsive de las secciones (próximo spec libre, `03`): en la QA del spec 02 no hubo scroll horizontal en 320–1280 px, pero quedan los logos de `ClientsSection` con proporción incorrecta (aviso de `next/image`) y el desborde de `ProjectCard` (abajo).
 - `BurgerSvg` y `CloseSvg` ya no se usan; confirmar con Diego si se borran.
-- Footer: copyright dice 2027 y "All rights reserved." en inglés; "Menu" sin tilde.
-- Typos en nombres: `Opion*` (→ `Opinion*`), `Enlance` (→ `Enlace`), `CertificationSection.tsx`, "Apuntalamineto". Confirmar con Diego antes de renombrar.
+- Typos en nombres: `Opion*` (→ `Opinion*`), `Enlance` (→ `Enlace`), `CertificationSection.tsx`. Confirmar con Diego antes de renombrar.
 - Decidir el envío del formulario de contacto.
 - Andamios (spec 01):
   - Falta probar el scroll en un móvil real o con CPU 4×.
-  - Los botones "Solicitar presupuesto" no llevan a ningún sitio.
   - El viewBox de los SVG tiene aire alrededor del dibujo.
-- Redirects de rutas viejas al desplegar en Vercel.
+- SEO (spec 02):
+  - Pendiente de confirmar por Diego: UNE-EN 12810, en qué casos exige el PMUD el RD 2177/2004 y la licencia de vía pública en Madrid. No publicar hasta tenerlo.
+  - Logo SVG en la imagen Open Graph (`public/img/logo.svg`, tarea 6.8).
+  - Al desplegar: Search Console + sitemap, Google Business Profile, Rich Results Test; actualizar `LAST_MODIFIED` en `app/sitemap.ts` cuando cambie el contenido.
+  - Futuro: páginas por servicio (fachadas, industria, venta, PMUD).
+- `CheckBox` de privacidad: es un `<button>` sin `type` (envía el formulario), sin `role`/`aria-checked` y de 20 px; "Política de Privacidad de SM8 Andamios" en `Form.tsx` → "SM8 España". Resolver con el envío del formulario.
+- `ProjectCard` se desborda entre 768 y 1023 px (`w-1/3` dentro de `md:grid-cols-2`).

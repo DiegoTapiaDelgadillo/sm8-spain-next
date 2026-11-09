@@ -10,6 +10,4 @@ export interface ScaffoldCategory {
 
 export interface ScaffoldsScrollProps {
   categories: readonly ScaffoldCategory[];
-  /** Ancla de la sección (`#andamios`): se pone en el inicio del recorrido fijado. */
-  id?: string;
 }

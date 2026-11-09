@@ -27,7 +27,7 @@ export const ContactForm = () => {
     },
     {
       name: "email",
-      label: "Email",
+      label: "Correo electrónico",
       placeholder: "Ej: juan.perez@example.com",
       type: "email",
       value: payload.email,
@@ -71,8 +71,8 @@ export const ContactForm = () => {
     <div className=" border border-neutral-800 w-full rounded-xl bg-linear-to-b from-neutral-900/60 to-black p-8">
       <div>
         <p className=" text-white">Empieza la conversación</p>
-        <p className=" text-neutral-500 text-xs">
-          Escribenos como podemos ayudarte
+        <p className=" text-neutral-400 text-xs">
+          Cuéntanos en qué podemos ayudarte
         </p>
       </div>
       <Form onSubmit={(e) => e.preventDefault()}>

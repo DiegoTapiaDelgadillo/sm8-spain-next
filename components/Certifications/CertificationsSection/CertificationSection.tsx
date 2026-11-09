@@ -5,12 +5,14 @@ import { CertItem } from "../CertItem/CertItem";
 import { ShieldSvg } from "@/components/shared/Icons/ShieldSvg";
 import { CheckCircleSvg } from "@/components/shared/Icons/CheckCircleSvg";
 import { PlusCircleSvg } from "@/components/shared/Icons/PlusCircleSvg";
+import { DocumentTextSvg } from "@/components/shared/Icons/DocumentText";
+import Image from "next/image";
 
 export const CertificationsSection = ({ id }: SectionAnchorProps) => {
   const items = [
     {
       title: "Normativa UNE-EN 12811",
-      description: "Requisitos de diseño y dimensionado de andamios",
+      description: "Requisitos de diseño y cálculo de andamios de trabajo",
       icon: <ShieldSvg className=" w-12 stroke-yellow-500" />,
     },
     {
@@ -24,6 +26,12 @@ export const CertificationsSection = ({ id }: SectionAnchorProps) => {
         "Cumplimiento de la Ley 31/1995 de Prevención de Riesgos Laborales",
       icon: <PlusCircleSvg className=" w-12 stroke-yellow-500" />,
     },
+    {
+      title: "PMUD y licencias",
+      description:
+        "Redactamos el plan de montaje, utilización y desmontaje y gestionamos las licencias necesarias.",
+      icon: <DocumentTextSvg className=" w-12 stroke-yellow-500" />,
+    },
   ];
 
   return (
@@ -32,12 +40,12 @@ export const CertificationsSection = ({ id }: SectionAnchorProps) => {
         <div className="grid gap-4">
           <Titles
             titleClassName=" text-start"
-            title="Montaje rápido, seguro y a medida de cada obra"
+            title="Andamios homologados y montaje seguro según normativa"
           />
           <div>
-            {items.map((item, index) => (
+            {items.map((item) => (
               <CertItem
-                key={index}
+                key={item.title}
                 title={item.title}
                 description={item.description}
                 icon={item.icon}
@@ -45,7 +53,14 @@ export const CertificationsSection = ({ id }: SectionAnchorProps) => {
             ))}
           </div>
         </div>
-        <div className=" border border-neutral-800 rounded-xl"></div>
+        <figure className="relative h-full w-full">
+          <Image
+            src={"/img/image2.webp"}
+            fill
+            alt="obra"
+            className="rounded-xl object-cover"
+          />
+        </figure>
       </div>
     </Section>
   );

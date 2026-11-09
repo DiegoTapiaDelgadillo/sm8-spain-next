@@ -356,7 +356,7 @@ export const IsoBuildFigure = ({
         </div>
       </div>
       {showCaption && (
-        <figcaption className="mt-3 text-sm text-neutral-500">
+        <figcaption className="mt-3 text-sm text-neutral-400">
           {caption}
         </figcaption>
       )}
