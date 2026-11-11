@@ -8,6 +8,12 @@ import {
   type Ref,
 } from "react";
 import "./iso-figure.css";
+import {
+  collectGroups,
+  fetchSvg,
+  paintSteps,
+  type StepGroup,
+} from "./isoSteps";
 
 /** Datos de una figura isométrica que se monta por pasos (generados por andamio/gen-next.mjs). */
 export type IsoBuildData = {
@@ -51,9 +57,6 @@ export type IsoBuildFigureProps = {
   ref?: Ref<IsoBuildHandle>;
 };
 
-type StepGroup = { g: SVGGElement; s: number };
-
-const DROP_CM = 80; // cada nivel cae desde 80 cm por encima de su sitio
 const TOUR_SECONDS = 12;
 
 // Recorrido automático: base 1 s, un paso por segundo, y el andamio completo hasta el final.
@@ -61,56 +64,8 @@ const tourAt = (t: number, LAST: number) => {
   const s = t % TOUR_SECONDS;
   return s < 1 ? 0 : Math.min(LAST, Math.floor(s - 1));
 };
-const ease = (t: number) => (t <= 0 ? 0 : t >= 1 ? 1 : 1 - Math.pow(1 - t, 3));
 const clamp = (v: number, lo: number, hi: number) =>
   Math.max(lo, Math.min(hi, v));
-
-const collectGroups = (root: ParentNode): StepGroup[] =>
-  Array.from(root.querySelectorAll<SVGGElement>("svg [data-step]")).map(
-    (g) => ({ g, s: Number(g.dataset.step) }),
-  );
-
-/**
- * Pinta los grupos `[data-step]` para el progreso `p`: cada grupo cae desde DROP_CM y aparece
- * con fundido (ease-out cúbico) mientras `p` recorre su tramo. Si `p === drawn` no toca el DOM.
- * Devuelve el progreso pintado para pasarlo como `drawn` en la siguiente llamada.
- */
-const paintSteps = (
-  groups: readonly StepGroup[],
-  p: number,
-  screenPerCmUp: number,
-  drawn: number | null,
-): number => {
-  if (drawn === p) return p;
-  for (const { g, s } of groups) {
-    const e = ease(p - s + 1);
-    if (e <= 0) {
-      g.style.display = "none";
-      continue;
-    }
-    g.style.display = "";
-    g.setAttribute("opacity", e.toFixed(3));
-    const dy = screenPerCmUp * DROP_CM * (1 - e);
-    if (e >= 1) g.removeAttribute("transform");
-    else g.setAttribute("transform", `translate(0 ${dy.toFixed(2)})`);
-  }
-  return p;
-};
-
-// Una sola descarga por SVG aunque haya varias instancias o el efecto se repita (StrictMode).
-const svgCache = new Map<string, Promise<string>>();
-const fetchSvg = (url: string) => {
-  let pending = svgCache.get(url);
-  if (!pending) {
-    pending = fetch(url).then((r) => {
-      if (!r.ok) throw new Error(`${r.status} ${url}`);
-      return r.text();
-    });
-    pending.catch(() => svgCache.delete(url));
-    svgCache.set(url, pending);
-  }
-  return pending;
-};
 
 export const IsoBuildFigure = ({
   data,
