@@ -9,6 +9,10 @@
 3. Responde en español.
 4. **`develop` es integración y `main` es producción; las dos las fusiona solo Diego.** Ningún agente ni subagente hace merge, rebase, push o commit directo a `develop` o `main`, ni despliega a producción, sin autorización explícita de Diego en ese momento. Se trabaja siempre en ramas de tarea que salen de `develop`; los PR van a `develop` y los revisa y fusiona Diego. Cuando lo de `develop` está aprobado y listo, Diego lo pasa a `main` (PR `develop` → `main`).
 5. **Toda implementación nueva sigue el "Flujo de implementación con specs"** (sección siguiente). Sin spec aprobado por Diego no se implementa, salvo los cambios pequeños descritos allí.
+6. **Ningún spec se cierra sin que pasen `npm run lint` y `npm run build`.** Ojo: desde Next 16, `next build` **ya no ejecuta ESLint**, así que hay que correr los dos comandos. Si alguno falla:
+   1. Reporta el error a Diego (comando, archivo, regla y mensaje).
+   2. Corrígelo y vuelve a ejecutar los dos comandos hasta que pasen sin errores.
+   3. Anótalo en la sección "Errores de lint y build aprendidos" de este archivo (qué falló, por qué y cómo evitarlo), para no volver a generarlo al modificar el código.
 
 ## Flujo de implementación con specs
 
@@ -27,11 +31,21 @@ El Frontend Lead (sesión principal) sigue estos pasos en orden para cada funcio
    - El Lead verifica el informe y marca la casilla de cierre de cada fase.
    - Si algo cambia durante la implementación, se actualiza el spec (sección "Cambios sobre el plan").
 7. **Cerrar.** Con todas las casillas marcadas y la revisión de `qa-a11y-reviewer` aprobada:
+   - Ejecuta `npm run lint` y `npm run build` (regla 6). Si fallan: reporta, corrige, repite y anota el error en "Errores de lint y build aprendidos". No se cierra el spec hasta que los dos pasen.
    - Rellena la sección "Resumen final" del spec con los cambios realizados.
    - Actualiza este `CLAUDE.md` con lo más relevante (decisiones nuevas, componentes nuevos, convenciones, pendientes resueltos o nuevos).
    - Da a Diego un resumen claro de los cambios y da por terminada la implementación. El PR va a `develop`; el merge a `develop` y el paso a `main` los decide Diego (regla 4).
 
 **Cambios pequeños sin spec:** una errata, un color, un texto puntual o un ajuste mínimo en un solo archivo se pueden hacer directamente. Si hay duda de si un cambio es "pequeño", pregunta a Diego.
+
+## Errores de lint y build aprendidos
+
+Registro de errores que han hecho fallar `npm run lint` o `npm run build` (regla 6). **Léelo antes de escribir código** para no repetirlos. Formato de cada entrada:
+
+- **[Spec NN] Regla o error** — `archivo`: qué falló y por qué. **Cómo evitarlo:** …
+
+- **[Spec 03] `react-hooks/error-boundaries`** — `app/api/contact/route.tsx`: crear JSX (`react: <EmailContact … />`) dentro de un `try/catch` da error. **Cómo evitarlo:** montar el JSX (o el array de correos) antes del `try` y dejar dentro solo la llamada a Resend.
+- **[Spec 03] `@typescript-eslint/no-unused-vars`** (aviso) — plantillas de correo: props o campos desestructurados con prefijo `_` siguen contando como sin usar. **Cómo evitarlo:** tipar como `FC<Props>` y desestructurar solo lo que se usa.
 
 ## Qué es
 
@@ -49,7 +63,7 @@ Rediseño del sitio real https://www.sm8.es/ (alquiler y montaje de andamios mul
 | Contenido | **Lo proporciona Diego.** Mantener placeholders hasta recibir el contenido definitivo; no copiar ni inventar datos. |
 | SEO | Spec `specs/02_seo_onpage_landing_spec.md`. Zona objetivo **Comunidad de Madrid**; palabras clave principales "alquiler de andamios Madrid", "montaje de andamios Madrid", "andamio multidireccional". Servicios que se pueden nombrar: alquiler **con** montaje y desmontaje, venta del Sistema Multidireccional SM8 y gestión del PMUD y licencias. Un solo `h1` (hero). Metadata en `app/layout.tsx` (textos en `lib/seo/seo.ts`), JSON-LD en `app/page.tsx` (`lib/seo/jsonLd.ts`: `LocalBusiness` + `WebSite` + `FAQPage`), `app/sitemap.ts`, `app/robots.ts`, `app/opengraph-image.tsx`. **Solo datos oficiales**: nada de normativa, geo, horario ni reseñas sin confirmar. |
 | Datos del negocio | **Única fuente: `lib/business.ts`** (NAP, redes, webs del grupo, servicios), confirmados por Diego. No duplicar teléfono, email ni dirección en componentes. Copyright: "© {año} SM8. Todos los derechos reservados." |
-| Formulario de contacto | **Pendiente de decidir** (opciones: Server Action + Resend, servicio externo, WhatsApp/mailto). Preguntar antes de implementar el envío. |
+| Formulario de contacto | **Route Handler `POST /api/contact` + Resend** (spec `03`). El cliente llama con la instancia de Axios `lib/http/api.ts` (`api.post("/contact", …)`). Reglas en `lib/contact/schema.ts` (zod, compartidas cliente/servidor). Protección: origen (`ALLOWED_ORIGINS`) + **Vercel BotID Basic** (sin coste) + validación + body ≤ 16 KB JSON. Envía `EmailContact` al cliente y `EmailInfo` a `CONTACT_TO_EMAIL`. Las plantillas se renderizan en el endpoint con `render()` (HTML + `plainText`) y se envían como `html`/`text`: **no usar `react:` de Resend**, que importa `@react-email/render` (no instalado como dependencia directa) y falla. Plantillas con `@react-email/components`: colores en hex (no `oklch`), 600 px, bordes/subrayados en `style`, imágenes en `public/img/email/` vía `getEmailAssets()` (`lib/email/assets.ts`, `EMAIL_ASSETS_URL`). Vista previa en `/email` solo en desarrollo. Variables en `.env.example`. |
 | Git | **Git flow simplificado**: `develop` = integración continua, `main` = producción. Ramas por tarea `feat/...`, `fix/...`, `chore/...` desde `develop` → PR a `develop` → cuando está aprobado y listo, PR `develop` → `main`. Tras el merge, la rama de tarea se borra. Conventional Commits (`feat: ...`). Claude no hace commit ni push si Diego no lo pide. **Prohibido hacer merge a `develop` o `main` sin autorización de Diego.** |
 
 ## Equipo de agentes
@@ -94,10 +108,11 @@ components/
   <Seccion>/<Seccion>Section/…   secciones de la landing (Home, Clients, Scaffolds, Projects,
                                  Certifications, Manual, Opinions, Contact)
   <Seccion>/<Pieza>/…            subcomponentes de cada sección (CertItem, ProjectCard, …)
-  shared/                        piezas reutilizables: Buttons, Forms, Icons, Navbar, Footer,
+  Email/                         plantillas de correo (react-email): EmailContact, EmailInfo
+  shared/                        piezas reutilizables: Buttons, Forms (+ FieldError, fieldClasses), Toast, Icons, Navbar, Footer,
                                  Section, Titles, Enlace, Collapse, CurrentYear
   Faq/FaqSection/                preguntas frecuentes (textos en faqItems.ts, reutilizados en el JSON-LD)
-lib/            business.ts (datos del negocio), seo/ (seo.ts, jsonLd.ts)
+lib/            business.ts (datos del negocio), seo/ (seo.ts, jsonLd.ts), contact/schema.ts, http/api.ts, email/assets.ts
 types/          interfaces de props, espejo de la estructura de components/
 public/         img/logo.webp, figures/*.svg (figuras isométricas)
 andamio/        generadores de las figuras isométricas (ver abajo)
@@ -109,6 +124,7 @@ specs/          planes de implementación NN_nombre_spec.md (plantilla: specs/_T
 - **Named exports** con arrow function: `export const Navbar = () => {…}`.
 - Props tipadas con `interface` en `types/...` (ej. `types/shared/button/buttonProps.ts`).
 - Server Components por defecto; `"use client"` solo cuando haya estado/efectos (ContactForm, ProjectCard, IsoBuildFigure).
+- Formularios: `InputText`/`TextArea` aceptan `error`, `required`, `inputMode`, `autoComplete`, `maxLength`; `CheckBox` es controlado (`checked`, `onChange`); `Form` recibe `privacyChecked`, `onPrivacyChange`, `privacyError`, `isSubmitting`. `MainButton` acepta `disabled` y `busy` (`aria-disabled`, conserva el foco). Avisos con `useToast()` (`toast.success` se cierra a los 6 s, `toast.error` queda fijo) dentro de `ToastProvider`.
 - Listas de contenido como arrays de objetos dentro del componente y `.map()`.
 - Envolver secciones con `<Section id?>` (lleva `scroll-mt` para la navbar fija; las secciones aceptan `SectionAnchorProps`) y títulos con `<Titles>` (pinta `h2` por defecto, prop `as`; subtítulo en `<p>`); botones con `MainButton` / `SecondaryButton` (con `href` renderizan un `<a>`, para anclas o `tel:`); desplegables con `Collapse` (`<details>`/`<summary>`, Server Component); enlaces del footer con `Enlance` (`external`, `ariaLabel`); año dinámico con `CurrentYear` (`"use cache"`, necesario por `cacheComponents`); iconos SVG en `components/shared/Icons` (aceptan `className`).
 - Imágenes con `next/image`.
@@ -144,9 +160,10 @@ specs/          planes de implementación NN_nombre_spec.md (plantilla: specs/_T
 
 - Contenido de relleno a sustituir cuando Diego lo pase: testimonios (`OpionsSection`), logos de clientes, tarjetas de proyectos, imagen/PDF de la ficha técnica (`ManualSection`, el botón "Descargar ficha técnica" no hace nada), caja vacía en Certificaciones, caja vacía (mapa) en Contacto.
 - Responsive de las secciones (próximo spec libre, `03`): en la QA del spec 02 no hubo scroll horizontal en 320–1280 px, pero quedan los logos de `ClientsSection` con proporción incorrecta (aviso de `next/image`) y el desborde de `ProjectCard` (abajo).
-- `BurgerSvg` y `CloseSvg` ya no se usan; confirmar con Diego si se borran.
+- `BurgerSvg` ya no se usa; confirmar con Diego si se borra (`CloseSvg` vuelve a usarse en el Toast).
 - Typos en nombres: `Opion*` (→ `Opinion*`), `Enlance` (→ `Enlace`), `CertificationSection.tsx`. Confirmar con Diego antes de renombrar.
-- Decidir el envío del formulario de contacto.
+- Formulario (spec 03): si hay abuso del acuse de recibo (se envía a cualquier email válido), añadir límite por IP (Upstash) o BotID Deep Analysis. Probar un envío real y ver los correos en Gmail/Outlook. Dar de alta las variables de `.env.example` en Vercel.
+- `MainButton` mide ~30 px de alto (`py-1`): subirlo en el spec de responsive.
 - Andamios (spec 01):
   - Falta probar el scroll en un móvil real o con CPU 4×.
   - El viewBox de los SVG tiene aire alrededor del dibujo.
@@ -155,5 +172,5 @@ specs/          planes de implementación NN_nombre_spec.md (plantilla: specs/_T
   - Logo SVG en la imagen Open Graph (`public/img/logo.svg`, tarea 6.8).
   - Al desplegar: Search Console + sitemap, Google Business Profile, Rich Results Test; actualizar `LAST_MODIFIED` en `app/sitemap.ts` cuando cambie el contenido.
   - Futuro: páginas por servicio (fachadas, industria, venta, PMUD).
-- `CheckBox` de privacidad: es un `<button>` sin `type` (envía el formulario), sin `role`/`aria-checked` y de 20 px; "Política de Privacidad de SM8 Andamios" en `Form.tsx` → "SM8 España". Resolver con el envío del formulario.
+- **Aviso / política de privacidad**: pendiente hasta que se lo compartan a Diego. Entonces se genera la página y se enlaza desde el texto de la casilla del formulario (spec 03).
 - `ProjectCard` se desborda entre 768 y 1023 px (`w-1/3` dentro de `md:grid-cols-2`).

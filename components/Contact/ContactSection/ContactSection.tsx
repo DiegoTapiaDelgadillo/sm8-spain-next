@@ -8,12 +8,13 @@ import { PhoneSvg } from "@/components/shared/Icons/PhoneSvg";
 import { EnvelopeSvg } from "@/components/shared/Icons/EnvelopeSvg";
 import { BUSINESS } from "@/lib/business";
 import type { CertItemProps } from "@/components/shared/Certifications/certItems";
-import Image from "next/image";
+import { ToastProvider } from "@/components/shared/Toast/ToastProvider";
+import { ClockSvg } from "@/components/shared/Icons/ClockSvg";
 
 export const ContactSection = ({ id }: SectionAnchorProps) => {
   const items: CertItemProps[] = [
     {
-      title: "Dirección",
+      title: "Oficina",
       description: BUSINESS.address.display,
       icon: <MapPin className=" w-6 stroke-yellow-500" />,
     },
@@ -24,16 +25,27 @@ export const ContactSection = ({ id }: SectionAnchorProps) => {
       icon: <PhoneSvg className=" w-6 stroke-yellow-500" />,
     },
     {
+      title: "Whastapp",
+      description: BUSINESS.whatsapp.display,
+      href: BUSINESS.whatsapp.href,
+      icon: <PhoneSvg className=" w-6 stroke-yellow-500" />,
+    },
+    {
       title: "Correo electrónico",
       description: BUSINESS.email,
       href: `mailto:${BUSINESS.email}`,
       icon: <EnvelopeSvg className=" w-6 stroke-yellow-500" />,
     },
+    {
+      title: "Horario de atención",
+      description: BUSINESS.businessHours.hours,
+      icon: <ClockSvg className=" w-6 stroke-yellow-500" />,
+    },
   ];
 
   return (
     <Section id={id}>
-      <div className=" grid lg:grid-cols-2 gap-4">
+      <div className=" grid lg:grid-cols-2 gap-4 items-center">
         <div>
           <Titles
             titleClassName="text-start"
@@ -52,17 +64,11 @@ export const ContactSection = ({ id }: SectionAnchorProps) => {
               />
             ))}
           </div>
-
-          <div className="  w-full  h-90 relative">
-            <Image
-              src={"/img/lona.webp"}
-              fill
-              alt="Lona"
-              className="object-cover rounded-xl"
-            />
-          </div>
         </div>
-        <ContactForm />
+        {/* Solo el formulario usa avisos: el proveedor (cliente) no envuelve el layout. */}
+        <ToastProvider>
+          <ContactForm />
+        </ToastProvider>
       </div>
     </Section>
   );

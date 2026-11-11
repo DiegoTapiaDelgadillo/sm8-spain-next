@@ -36,7 +36,7 @@ export const CertificationsSection = ({ id }: SectionAnchorProps) => {
 
   return (
     <Section id={id}>
-      <div className=" grid lg:grid-cols-2 gap-12">
+      <div className=" grid lg:grid-cols-2 gap-12 items-center">
         <div className="grid gap-4">
           <Titles
             titleClassName=" text-start"
@@ -53,9 +53,9 @@ export const CertificationsSection = ({ id }: SectionAnchorProps) => {
             ))}
           </div>
         </div>
-        <figure className="relative h-full w-full">
+        <figure className=" aspect-square grid relative h-full w-full">
           <Image
-            src={"/img/image2.webp"}
+            src={"/img/lona.webp"}
             fill
             alt="obra"
             className="rounded-xl object-cover"
