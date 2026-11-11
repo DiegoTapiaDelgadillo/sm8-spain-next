@@ -3,14 +3,15 @@ import { MainButton } from "@/components/shared/Buttons/MainButton/MainButton";
 import { SecondaryButton } from "@/components/shared/Buttons/SecondaryButton/SecondaryButton";
 import { MapPin } from "@/components/shared/Icons/MapPin";
 import { BUSINESS } from "@/lib/business";
+import { HeroScaffold } from "@/components/Home/HeroScaffold/HeroScaffold";
 
 export const HomeSection = ({ id }: SectionAnchorProps) => {
   return (
     <section
       id={id}
-      className=" h-screen w-full bg-linear-to-b from-black to-neutral-900 flex justify-center items-center px-4 xl:px-80"
+      className=" flex min-h-[max(100svh,35rem)] w-full flex-col items-center bg-linear-to-b from-black to-neutral-900 pt-24 lg:pt-28"
     >
-      <div className=" w-full">
+      <div className=" w-full max-w-4xl shrink-0 px-4">
         <div className=" w-full flex justify-center">
           <div className=" items-center gap-1 px-4 py-2 bg-linear-to-b from-neutral-950 to-neutral-800 rounded-full border border-neutral-500 w-fit flex justify-center">
             <MapPin className=" w-4 stroke-neutral-400" />
@@ -39,6 +40,8 @@ export const HomeSection = ({ id }: SectionAnchorProps) => {
           />
         </div>
       </div>
+      {/* Figura decorativa: ocupa el alto que queda bajo los botones, de borde a borde */}
+      <HeroScaffold className="mt-3" />
     </section>
   );
 };

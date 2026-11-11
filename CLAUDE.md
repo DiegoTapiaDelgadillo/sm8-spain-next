@@ -46,6 +46,14 @@ Registro de errores que han hecho fallar `npm run lint` o `npm run build` (regla
 
 - **[Spec 03] `react-hooks/error-boundaries`** — `app/api/contact/route.tsx`: crear JSX (`react: <EmailContact … />`) dentro de un `try/catch` da error. **Cómo evitarlo:** montar el JSX (o el array de correos) antes del `try` y dejar dentro solo la llamada a Resend.
 - **[Spec 03] `@typescript-eslint/no-unused-vars`** (aviso) — plantillas de correo: props o campos desestructurados con prefijo `_` siguen contando como sin usar. **Cómo evitarlo:** tipar como `FC<Props>` y desestructurar solo lo que se usa.
+- **[Spec 04] TS2339 `Property 'setTimeout' does not exist on type 'never'`** (lo da `tsc`, y por tanto `next build`) — `components/Home/HeroScaffold/HeroScaffold.tsx`: tras `if ("requestIdleCallback" in window) {…} else {…}`, TypeScript deduce que en el `else` `window` es `never` (el tipo de `window` ya incluye `requestIdleCallback`). **Cómo evitarlo:** en la rama de respaldo usar `setTimeout`/`clearTimeout` globales, no `window.setTimeout`.
+
+## Errores de despliegue y producción aprendidos
+
+Errores que solo aparecen al desplegar o en producción (no los detectan lint ni build). Mismo formato que la sección anterior.
+
+- **[Spec 04] Figura del hero con ancho 0 (no se ve)** — `HeroScaffold`: unidades `cqh` dentro de un contenedor `container-type: size` cuyo alto sale de `flex-1` en una columna con solo `min-height`: Chrome las resolvía a 0. No lo detectan lint ni build. **Cómo evitarlo:** no depender de `cqh` para alturas que salen de flex; medir con `ResizeObserver` y pasar el alto como variable CSS (`--stage-h`).
+- **[Spec 03] `POST /api/contact` → 502 + `validation_error` (422) de Resend: "Invalid `from` field…"** — variables de entorno en Vercel: `CONTACT_FROM_EMAIL` se guardó con comillas (`"SM8 España <ventas@sm8.es>"`, copiado de `.env.example`). En un `.env` las comillas se quitan al leerlo, pero **el panel de Vercel guarda el valor literal**, comillas incluidas, y Resend no lo reconoce como `Nombre <email>`. En local funcionaba. **Cómo arreglarlo:** en Vercel → Settings → Environment Variables, poner el valor **sin comillas** (`SM8 España <ventas@sm8.es>`) y hacer **Redeploy** (las variables solo se aplican en despliegues nuevos). **Cómo evitarlo:** nunca poner comillas en los valores de Vercel. **Cómo diagnosticarlo:** el 502 del endpoint siempre es un rechazo de Resend; el motivo exacto está en Vercel → Logs (línea `[api/contact] Resend devolvió un error`) o en Resend → Logs. Si sale un 403 de dominio no verificado, falta verificar `sm8.es` en Resend → Domains (registros DNS).
 
 ## Qué es
 
@@ -62,6 +70,7 @@ Rediseño del sitio real https://www.sm8.es/ (alquiler y montaje de andamios mul
 | Tema | **Solo oscuro.** |
 | Contenido | **Lo proporciona Diego.** Mantener placeholders hasta recibir el contenido definitivo; no copiar ni inventar datos. |
 | SEO | Spec `specs/02_seo_onpage_landing_spec.md`. Zona objetivo **Comunidad de Madrid**; palabras clave principales "alquiler de andamios Madrid", "montaje de andamios Madrid", "andamio multidireccional". Servicios que se pueden nombrar: alquiler **con** montaje y desmontaje, venta del Sistema Multidireccional SM8 y gestión del PMUD y licencias. Un solo `h1` (hero). Metadata en `app/layout.tsx` (textos en `lib/seo/seo.ts`), JSON-LD en `app/page.tsx` (`lib/seo/jsonLd.ts`: `LocalBusiness` + `WebSite` + `FAQPage`), `app/sitemap.ts`, `app/robots.ts`, `app/opengraph-image.tsx`. **Solo datos oficiales**: nada de normativa, geo, horario ni reseñas sin confirmar. |
+| Hero | Spec `specs/04_andamio_piramidal_hero_spec.md`. Andamio multidireccional exento en pirámide escalonada (7 torres de 2,07 × 2,07 m, 2-4-6-8-6-4-2 m), dibujado con anatomy (`andamio/piramide.mjs`, cámara a 84°) y aprobado por Diego. `HomeSection` es una columna flex `min-h-[max(100svh,35rem)]` (sin alto fijo ni `overflow-hidden`, para que el texto ampliado no corte los botones) y `HeroScaffold` ocupa el alto libre bajo los botones: siempre se ve el pico y la base se corta bajo el degradado. Decorativo (`aria-hidden`); se monta una vez (≈3 s, 2 pasos/s, por tiempo transcurrido) y con movimiento reducido aparece montado. |
 | Datos del negocio | **Única fuente: `lib/business.ts`** (NAP, redes, webs del grupo, servicios), confirmados por Diego. No duplicar teléfono, email ni dirección en componentes. Copyright: "© {año} SM8. Todos los derechos reservados." |
 | Formulario de contacto | **Route Handler `POST /api/contact` + Resend** (spec `03`). El cliente llama con la instancia de Axios `lib/http/api.ts` (`api.post("/contact", …)`). Reglas en `lib/contact/schema.ts` (zod, compartidas cliente/servidor). Protección: origen (`ALLOWED_ORIGINS`) + **Vercel BotID Basic** (sin coste) + validación + body ≤ 16 KB JSON. Envía `EmailContact` al cliente y `EmailInfo` a `CONTACT_TO_EMAIL`. Las plantillas se renderizan en el endpoint con `render()` (HTML + `plainText`) y se envían como `html`/`text`: **no usar `react:` de Resend**, que importa `@react-email/render` (no instalado como dependencia directa) y falla. Plantillas con `@react-email/components`: colores en hex (no `oklch`), 600 px, bordes/subrayados en `style`, imágenes en `public/img/email/` vía `getEmailAssets()` (`lib/email/assets.ts`, `EMAIL_ASSETS_URL`). Vista previa en `/email` solo en desarrollo. Variables en `.env.example`. |
 | Git | **Git flow simplificado**: `develop` = integración continua, `main` = producción. Ramas por tarea `feat/...`, `fix/...`, `chore/...` desde `develop` → PR a `develop` → cuando está aprobado y listo, PR `develop` → `main`. Tras el merge, la rama de tarea se borra. Conventional Commits (`feat: ...`). Claude no hace commit ni push si Diego no lo pide. **Prohibido hacer merge a `develop` o `main` sin autorización de Diego.** |
@@ -111,6 +120,7 @@ components/
   Email/                         plantillas de correo (react-email): EmailContact, EmailInfo
   shared/                        piezas reutilizables: Buttons, Forms (+ FieldError, fieldClasses), Toast, Icons, Navbar, Footer,
                                  Section, Titles, Enlace, Collapse, CurrentYear
+  Home/HeroScaffold/             andamio piramidal del hero (cliente; heroScaffoldData.ts generado)
   Faq/FaqSection/                preguntas frecuentes (textos en faqItems.ts, reutilizados en el JSON-LD)
 lib/            business.ts (datos del negocio), seo/ (seo.ts, jsonLd.ts), contact/schema.ts, http/api.ts, email/assets.ts
 types/          interfaces de props, espejo de la estructura de components/
@@ -146,6 +156,8 @@ specs/          planes de implementación NN_nombre_spec.md (plantilla: specs/_T
   - `mode="auto"` (por defecto): bucle automático con ratón, clic y teclado.
   - `mode="scroll"`: lo controla el padre con `ref.setProgress(p)`. Acepta además `eager` para precargar.
 - La sección Andamios usa `components/Scaffolds/ScaffoldsScroll/ScaffoldsScroll.tsx`, una escena fijada guiada por scroll con `useScrollProgress`. La velocidad (`STEP_VH=60`, `PAUSE_VH=30`, `FADE_VH=45`) está aprobada por Diego. Con `prefers-reduced-motion` se muestra apilado y estático. El ancla `#andamios` va en `<Section id>` de `ScaffoldsSection` para que se vea el título de la sección (spec 02). Detalle en `specs/01_scaffolds_scroll_animation_spec.md`.
+- Pirámide del hero: `node andamio/build-piramide.mjs` → `andamio/piramide-dark.html` (página de iteración que imita el hero, con todo el detalle). `node andamio/gen-next.mjs piramide` genera solo `public/figures/andamio-sm8-piramide.svg` y `components/Home/HeroScaffold/heroScaffoldData.ts` con la versión ligera (`PIR_LITE=1`: sin perforaciones, cuñas ni roscas) y los `d` compactados por `andamio/lib/svg-min.mjs`. El SVG está en el límite de 150 KB gzip: cualquier pieza nueva lo supera.
+- `components/Scaffolds/IsoBuildFigure/isoSteps.ts` tiene los helpers del montaje por pasos (`fetchSvg` con caché, `collectGroups`, `paintSteps` con caída opcional y sin reescribir grupos que no cambian); los usan `IsoBuildFigure` y `HeroScaffold`.
 - `andamio/shots/` son capturas de referencia locales, fuera de git.
 
 ## Datos del negocio (referencia del sitio actual — usar solo si Diego lo confirma)
@@ -159,7 +171,7 @@ specs/          planes de implementación NN_nombre_spec.md (plantilla: specs/_T
 ## Pendientes conocidos
 
 - Contenido de relleno a sustituir cuando Diego lo pase: testimonios (`OpionsSection`), logos de clientes, tarjetas de proyectos, imagen/PDF de la ficha técnica (`ManualSection`, el botón "Descargar ficha técnica" no hace nada), caja vacía en Certificaciones, caja vacía (mapa) en Contacto.
-- Responsive de las secciones (próximo spec libre, `03`): en la QA del spec 02 no hubo scroll horizontal en 320–1280 px, pero quedan los logos de `ClientsSection` con proporción incorrecta (aviso de `next/image`) y el desborde de `ProjectCard` (abajo).
+- Responsive de las secciones (próximo spec libre, `05`): en la QA del spec 02 no hubo scroll horizontal en 320–1280 px, pero quedan los logos de `ClientsSection` con proporción incorrecta (aviso de `next/image`) y el desborde de `ProjectCard` (abajo).
 - `BurgerSvg` ya no se usa; confirmar con Diego si se borra (`CloseSvg` vuelve a usarse en el Toast).
 - Typos en nombres: `Opion*` (→ `Opinion*`), `Enlance` (→ `Enlace`), `CertificationSection.tsx`. Confirmar con Diego antes de renombrar.
 - Formulario (spec 03): si hay abuso del acuse de recibo (se envía a cualquier email válido), añadir límite por IP (Upstash) o BotID Deep Analysis. Probar un envío real y ver los correos en Gmail/Outlook. Dar de alta las variables de `.env.example` en Vercel.
@@ -172,5 +184,6 @@ specs/          planes de implementación NN_nombre_spec.md (plantilla: specs/_T
   - Logo SVG en la imagen Open Graph (`public/img/logo.svg`, tarea 6.8).
   - Al desplegar: Search Console + sitemap, Google Business Profile, Rich Results Test; actualizar `LAST_MODIFIED` en `app/sitemap.ts` cuando cambie el contenido.
   - Futuro: páginas por servicio (fachadas, industria, venta, PMUD).
+- Hero (spec 04): probar el montaje en un móvil real o con CPU 4×; a 320×568 solo se ven ≈42 px del pico; decidir si se versiona `andamio/piramide-dark.html` (2,4 MB). Los rodapiés del modelo de la pirámide salen con `NaN` y no se dibujan (Diego prefirió dejarlo así).
 - **Aviso / política de privacidad**: pendiente hasta que se lo compartan a Diego. Entonces se genera la página y se enlaza desde el texto de la casilla del formulario (spec 03).
 - `ProjectCard` se desborda entre 768 y 1023 px (`w-1/3` dentro de `md:grid-cols-2`).
