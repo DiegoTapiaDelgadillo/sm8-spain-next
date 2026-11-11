@@ -55,6 +55,9 @@ Qué existe hoy en el proyecto relacionado con esta petición (archivos, compone
 - [ ] Revisión QA verificada por el Lead
 
 ### Cierre — Frontend Lead
+- [ ] `npm run lint` sin errores
+- [ ] `npm run build` sin errores
+- [ ] Errores encontrados (si los hubo) reportados, corregidos y anotados en "Errores de lint y build aprendidos" de `CLAUDE.md`
 - [ ] Resumen final escrito
 - [ ] `CLAUDE.md` actualizado
 - [ ] Resumen enviado a Diego

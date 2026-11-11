@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withBotId } from "botid/next/config";
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -27,4 +28,6 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// withBotId añade los rewrites y cabeceras del proxy de Vercel BotID (spec 03)
+// y conserva el resto de la configuración.
+export default withBotId(nextConfig);

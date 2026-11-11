@@ -10,6 +10,13 @@ export const BUSINESS = {
     display: "+34 616 74 02 90",
     href: "tel:+34616740290",
   },
+  whatsapp: {
+    display: "+34 682 41 12 45",
+    href: "https://wa.me/34682411245",
+  },
+  businessHours: {
+    hours: "Lunes a viernes, de 8:00 hrs a 18:00 hrs. ",
+  },
   address: {
     street: "Av. de Manoteras 38",
     district: "Chamartín",
