@@ -13,3 +13,8 @@ export interface ButtonProps {
    */
   busy?: boolean;
 }
+
+export interface RollTextProps {
+  /** Texto del botón: se pinta una vez visible y otra como copia `aria-hidden`. */
+  text: string;
+}

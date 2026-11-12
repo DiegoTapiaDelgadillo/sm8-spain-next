@@ -7,7 +7,7 @@ export const Enlance = ({ href, text, external, ariaLabel }: EnlaceProps) => {
         href={href}
         aria-label={ariaLabel}
         {...(external && { target: "_blank", rel: "noopener noreferrer" })}
-        className=" text-sm text-neutral-400 hover:text-white transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-400 rounded-sm"
+        className=" link-underline text-sm text-neutral-400 hover:text-white transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-400 rounded-sm"
       >
         {text}
       </a>

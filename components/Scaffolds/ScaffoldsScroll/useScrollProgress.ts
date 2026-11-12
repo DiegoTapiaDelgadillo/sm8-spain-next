@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useEffectEvent, useRef, type RefObject } from "react";
+import { getScrollLead } from "@/lib/motion/lenis";
 
 type ScrollProgressOptions = {
   /** Si es `false`, no escucha el scroll (p. ej. con movimiento reducido). */
@@ -45,8 +46,12 @@ export const useScrollProgress = (
 
     const measure = () => {
       const rect = el.getBoundingClientRect();
+      // Con Lenis se mide contra su destino (`targetScroll`), no contra la posición interpolada:
+      // así el único suavizado es el de aquí (`smoothTime`) y la escena va igual que con scroll
+      // nativo. Sin Lenis, `getScrollLead()` es 0.
+      const top = rect.top - getScrollLead();
       const travel = rect.height - window.innerHeight;
-      target = travel > 0 ? clamp01(-rect.top / travel) : rect.top <= 0 ? 1 : 0;
+      target = travel > 0 ? clamp01(-top / travel) : top <= 0 ? 1 : 0;
     };
 
     const jump = () => {

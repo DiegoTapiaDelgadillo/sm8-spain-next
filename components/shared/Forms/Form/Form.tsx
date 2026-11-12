@@ -13,7 +13,15 @@ export const Form = (props: FormProps) => {
   const privacyInvalid = Boolean(props.privacyError);
 
   return (
-    <form onSubmit={props.onSubmit} noValidate className=" grid gap-4 mt-4">
+    // `data-reveal-group`: los campos (hijos directos) entran escalonados una sola vez. Es un
+    // atributo fijo (igual en servidor y cliente); los `FieldError` van dentro de cada campo,
+    // así que no se animan al aparecer.
+    <form
+      onSubmit={props.onSubmit}
+      noValidate
+      data-reveal-group
+      className=" grid gap-4 mt-4"
+    >
       {props.children}
       <div>
         <div className=" flex gap-2 items-start">

@@ -18,6 +18,7 @@ import { IndustryFigure } from "@/components/Scaffolds/IndustryFigure/IndustryFi
 import { MainButton } from "@/components/shared/Buttons/MainButton/MainButton";
 import { DocumentTextSvg } from "@/components/shared/Icons/DocumentText";
 import { useScrollProgress } from "./useScrollProgress";
+import { scrollToImmediate } from "@/lib/motion/lenis";
 
 // ── Recorrido (unidades: % de la altura de pantalla de scroll) ─────────────────────────
 /** Pasos de montaje de cada figura (paso 0 = base … paso 4 = completo). */
@@ -208,7 +209,8 @@ export const ScaffoldsScroll = ({ categories }: ScaffoldsScrollProps) => {
       el.getBoundingClientRect().top +
       ((i * CATEGORY_VH) / total) * travel;
     snap();
-    window.scrollTo({ top: Math.ceil(top), behavior: "instant" });
+    // Con Lenis activo pasa por `lenis.scrollTo(…, { immediate })`; si no, `window.scrollTo` instantáneo.
+    scrollToImmediate(Math.ceil(top));
   };
 
   const containerStyle = {
