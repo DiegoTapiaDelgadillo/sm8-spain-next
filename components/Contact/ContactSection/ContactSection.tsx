@@ -25,7 +25,7 @@ export const ContactSection = ({ id }: SectionAnchorProps) => {
       icon: <PhoneSvg className=" w-6 stroke-yellow-500" />,
     },
     {
-      title: "Whastapp",
+      title: "WhatsApp",
       description: BUSINESS.whatsapp.display,
       href: BUSINESS.whatsapp.href,
       icon: <PhoneSvg className=" w-6 stroke-yellow-500" />,
@@ -53,7 +53,7 @@ export const ContactSection = ({ id }: SectionAnchorProps) => {
             title="Pide presupuesto de andamios en Madrid"
             subtitle="Cuéntanos qué obra tienes y te preparamos un presupuesto sin compromiso de alquiler, montaje o venta."
           />
-          <div className=" mt-4">
+          <div data-reveal-group className=" mt-4">
             {items.map((item) => (
               <CertItem
                 key={item.title}

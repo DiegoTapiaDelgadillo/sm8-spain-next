@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import type { SectionAnchorProps } from "@/types/shared/section/section";
 import { Section } from "@/components/shared/Section/Section";
 import { Titles } from "@/components/shared/Titles/Titles";
@@ -6,7 +7,8 @@ import { ShieldSvg } from "@/components/shared/Icons/ShieldSvg";
 import { CheckCircleSvg } from "@/components/shared/Icons/CheckCircleSvg";
 import { PlusCircleSvg } from "@/components/shared/Icons/PlusCircleSvg";
 import { DocumentTextSvg } from "@/components/shared/Icons/DocumentText";
-import Image from "next/image";
+import { BlurImage } from "@/components/shared/BlurImage/BlurImage";
+import lona from "@/public/img/lona.webp";
 
 export const CertificationsSection = ({ id }: SectionAnchorProps) => {
   const items = [
@@ -42,7 +44,7 @@ export const CertificationsSection = ({ id }: SectionAnchorProps) => {
             titleClassName=" text-start"
             title="Andamios homologados y montaje seguro según normativa"
           />
-          <div>
+          <div data-reveal-group>
             {items.map((item) => (
               <CertItem
                 key={item.title}
@@ -53,12 +55,20 @@ export const CertificationsSection = ({ id }: SectionAnchorProps) => {
             ))}
           </div>
         </div>
-        <figure className=" aspect-square grid relative h-full w-full">
-          <Image
-            src={"/img/lona.webp"}
+        {/* Revelado `image`: el recorte usa el mismo radio que el envoltorio (rounded-xl). */}
+        <figure
+          data-reveal="image"
+          style={{ "--reveal-radius": "0.75rem" } as CSSProperties}
+          className=" aspect-square grid relative h-full w-full"
+        >
+          {/* 1 columna hasta lg; luego la mitad, menos px-24 y gap-12. */}
+          <BlurImage
+            src={lona}
             fill
+            sizes="(min-width: 64rem) calc(50vw - 7.5rem), calc(100vw - 2rem)"
             alt="obra"
-            className="rounded-xl object-cover"
+            wrapperClassName="rounded-xl"
+            className="object-cover"
           />
         </figure>
       </div>

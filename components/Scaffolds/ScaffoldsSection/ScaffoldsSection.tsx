@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import type { SectionAnchorProps } from "@/types/shared/section/section";
 import type { ScaffoldCategory } from "@/types/Scaffolds/scaffolds";
 import { Section } from "@/components/shared/Section/Section";
@@ -40,7 +41,12 @@ export const ScaffoldsSection = ({ id }: SectionAnchorProps) => {
         titleClassName=" text-center"
       />
       <div className=" flex justify-center items-center mt-6">
-        <div className=" bg-blue-500/10 py-2 px-8 rounded-xl mb-12">
+        {/* Entra tras el título (mismo escalón que los subtítulos de `Titles`). */}
+        <div
+          data-reveal
+          style={{ "--i": 2 } as CSSProperties}
+          className=" bg-blue-500/10 py-2 px-8 rounded-xl mb-12"
+        >
           <p className=" text-center sm:text-start text-white text-sm">
             El Sistema Multidireccional SM8 se adapta a cualquier proyecto
             gracias a la geometría de su roseta octogonal.

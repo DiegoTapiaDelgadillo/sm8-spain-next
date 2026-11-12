@@ -3,17 +3,21 @@ import { Enlance } from "../Enlace/Enlace";
 import { CurrentYear } from "../CurrentYear/CurrentYear";
 import type { LinkPropsArray } from "@/types/shared/links/links";
 import { BUSINESS } from "@/lib/business";
+import logo from "@/public/img/logo.webp";
 
 export const Footer = ({ links }: LinkPropsArray) => {
   return (
     <footer className=" w-full  mt-12 border-t border-t-neutral-900 bg-linear-to-t from-black to-neutral-900/50">
-      <div className=" grid grid-cols-1 gap-8 sm:grid-cols-2 lg:flex lg:justify-between w-full px-4 lg:px-30 py-12">
+      {/* Columnas en grupo escalonado (revelado de spec 05). */}
+      <div
+        data-reveal-group
+        className=" grid grid-cols-1 gap-8 sm:grid-cols-2 lg:flex lg:justify-between w-full px-4 lg:px-30 py-12"
+      >
         <div>
           <figure className=" w-fit h-fit">
             <Image
-              src={"/img/logo.webp"}
+              src={logo}
               width={50}
-              height={30}
               className="h-auto w-12.5"
               alt="Logo de SM8 España"
             />

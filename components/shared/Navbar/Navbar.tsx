@@ -7,6 +7,8 @@ import { useActiveSection } from "./useActiveSection";
 import Image from "next/image";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { LinkPropsArray } from "@/types/shared/links/links";
+import { startLenis, stopLenis } from "@/lib/motion/lenis";
+import logo from "@/public/img/logo.webp";
 
 /** Breakpoint `lg` de Tailwind v4 (64rem = 1024px). */
 const LG_QUERY = "(min-width: 64rem)";
@@ -42,6 +44,9 @@ export const Navbar = ({ links }: LinkPropsArray) => {
     const scrollbar = window.innerWidth - documentElement.clientWidth;
     body.style.overflow = "hidden";
     if (scrollbar > 0) body.style.paddingRight = `${scrollbar}px`;
+    // Con Lenis (escritorio estrecho con ratón) `overflow: hidden` no basta: Lenis desplaza
+    // con `scrollTo`. Se para mientras el menú está abierto.
+    stopLenis();
   }, []);
 
   const unlockScroll = useCallback(() => {
@@ -49,6 +54,7 @@ export const Navbar = ({ links }: LinkPropsArray) => {
     document.body.style.overflow = savedScroll.current.overflow;
     document.body.style.paddingRight = savedScroll.current.paddingRight;
     savedScroll.current = null;
+    startLenis();
   }, []);
 
   /**
@@ -130,7 +136,7 @@ export const Navbar = ({ links }: LinkPropsArray) => {
     <nav
       ref={navRef}
       aria-label="Principal"
-      className=" fixed inset-x-0 top-0 z-50 w-full lg:px-16 lg:pt-4 "
+      className=" nav-intro fixed inset-x-0 top-0 z-50 w-full lg:px-16 lg:pt-4 "
     >
       {/* Barra: primero en el DOM (orden de Tab: logo → X → enlaces → "Contactar")
           y por encima del overlay (z-10) para que la X siga visible y clicable. */}
@@ -141,9 +147,9 @@ export const Navbar = ({ links }: LinkPropsArray) => {
           className=" rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-yellow-400"
         >
           <Image
-            src={"/img/logo.webp"}
+            src={logo}
             width={50}
-            height={30}
+            preload
             alt="SM8 España, ir al inicio"
             className=" h-auto w-12.5"
           />

@@ -43,3 +43,6 @@ next-env.d.ts
 
 # capturas locales de las figuras
 /andamio/shots/
+
+# Originales de imágenes sin comprimir (fuente de scripts/optimize-images.mjs)
+/assets-src/
