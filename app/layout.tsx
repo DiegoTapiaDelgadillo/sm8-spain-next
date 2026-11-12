@@ -5,6 +5,15 @@ import { Montserrat, Mona_Sans } from "next/font/google";
 import { Footer } from "@/components/shared/Footer/Footer";
 import { BUSINESS } from "@/lib/business";
 import { SEO } from "@/lib/seo/seo";
+import { RevealObserver } from "@/components/shared/Motion/RevealObserver";
+import { SmoothScroll } from "@/components/shared/Motion/SmoothScroll";
+
+/**
+ * Red de seguridad del revelado (spec 05): si a los 3 s `RevealObserver` no ha marcado
+ * `data-reveal-ready` (JS caído o sin hidratar), se revela todo. Va en línea porque debe
+ * funcionar aunque no cargue ningún bundle.
+ */
+const REVEAL_SAFETY = `setTimeout(function(){var d=document.documentElement;if(!d.hasAttribute("data-reveal-ready"))d.setAttribute("data-reveal-all","")},3000)`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(BUSINESS.url),
@@ -54,15 +63,21 @@ const links = [
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
+    // `suppressHydrationWarning`: el script de abajo, `RevealObserver` y Lenis añaden atributos
+    // y clases a <html> (`data-reveal-*`, `lenis`) que no están en el HTML del servidor.
     <html
       lang="es"
       data-scroll-behavior="smooth"
       className={`${montserrat.variable} ${dm_sans.variable}`}
+      suppressHydrationWarning
     >
       <body className=" bg-black">
+        <script dangerouslySetInnerHTML={{ __html: REVEAL_SAFETY }} />
         <Navbar links={links} />
         <main>{children}</main>
         <Footer links={links} />
+        <RevealObserver />
+        <SmoothScroll />
       </body>
     </html>
   );

@@ -18,6 +18,18 @@ const { svgUrl, screenPerCmUp, steps, ratio } = HERO_SCAFFOLD;
 const LAST = steps.length - 1;
 
 /**
+ * Espera a que terminen las animaciones CSS de entrada del hero (`hero-intro-*`, en
+ * `globals.css`). Si ya acabaron o no hay (movimiento reducido), resuelve enseguida.
+ */
+const introDone = () => {
+  if (typeof CSSAnimation === "undefined" || !document.getAnimations) return Promise.resolve();
+  const intro = document
+    .getAnimations()
+    .filter((a) => a instanceof CSSAnimation && a.animationName.startsWith("hero-intro"));
+  return Promise.allSettled(intro.map((a) => a.finished)).then(() => undefined);
+};
+
+/**
  * Andamio piramidal decorativo del hero. Es el "escenario": ocupa el alto libre del padre
  * (`flex-1`) y el SVG se ajusta a ese alto para que siempre se vea el pico. Carga el SVG al montarse,
  * reproduce el montaje una sola vez y se queda quieto; con `prefers-reduced-motion` aparece montado.
@@ -68,7 +80,10 @@ export const HeroScaffold = ({ className = "" }: HeroScaffoldProps) => {
         drawn = paintSteps(groups, p, screenPerCmUp, drawn, DROP_CM);
         frame = p < LAST ? requestAnimationFrame(tick) : 0;
       };
-      frame = requestAnimationFrame(tick);
+      // Solo cambia cuándo empieza: tras la entrada del hero (≈ 1 s desde el primer pintado).
+      introDone().then(() => {
+        if (!cancelled) frame = requestAnimationFrame(tick);
+      });
     };
 
     fetchSvg(svgUrl)

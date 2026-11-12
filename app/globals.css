@@ -6,6 +6,20 @@
   --font-text: var(--font-body), sans-serif;
 }
 
+/* Tokens de movimiento (spec 05). `static` para que las variables existan siempre en :root
+   y se puedan usar en CSS propio y en estilos en línea. Utilidades que generan:
+   `ease-out-soft`, `ease-in-out-soft`, `duration-fast|base|slow`, `delay-stagger`. */
+@theme static {
+  /* Entradas y revelados. */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  /* Hovers que van y vuelven (texto que rueda, subrayado). */
+  --ease-in-out-soft: cubic-bezier(0.65, 0, 0.35, 1);
+  --transition-duration-fast: 300ms; /* hovers */
+  --transition-duration-base: 600ms; /* bloques de texto, tarjetas */
+  --transition-duration-slow: 900ms; /* imágenes, títulos */
+  --transition-delay-stagger: 70ms; /* retraso entre hermanos (máx. 6 escalones) */
+}
+
 /* En `@layer base` para que las utilidades (`font-text`) puedan sobrescribirlas. */
 @layer base {
   body,
@@ -35,6 +49,12 @@ html {
   }
 }
 
+/* Con Lenis activo (`SmoothScroll` pone la clase `lenis` en <html>) el desplazamiento lo anima
+   Lenis: el `smooth` nativo no debe sumarse. */
+html.lenis {
+  scroll-behavior: auto;
+}
+
 /* Collapse (<details>): apertura animada donde hay soporte de ::details-content
    e interpolate-size; sin soporte, abre y cierra al instante. */
 @supports selector(::details-content) {
@@ -58,5 +78,410 @@ html {
     .collapse-details::details-content {
       transition: none;
     }
+  }
+}
+
+/* ==========================================================================
+   Revelado al hacer scroll (spec 05)
+   --------------------------------------------------------------------------
+   Contrato (lo cumple `components/shared/Motion/RevealObserver.tsx`):
+   - `data-reveal` (vacío o "fade-up"): opacidad 0 + 16 px abajo → visible.
+   - `data-reveal="image"`: marco con clip-path inset(8%) → inset(0); la imagen de
+     dentro (`img`/`video`, o el envoltorio `.blur-image` de BlurImage) pasa de
+     scale 1.06 a 1. Radio del recorte: `--reveal-radius` (12px por defecto).
+   - `data-reveal="words"`: título dividido en `.reveal-word > span` (lo hace Titles);
+     cada palabra sube desde su máscara con 40 ms × `--w` de retraso.
+   - `data-reveal-group`: sus hijos directos hacen fade-up escalonados 70 ms
+     (`--i` automático por posición, máx. 6). No poner `data-reveal` en esos hijos.
+   - `--i` (entero, no se hereda): escalón de retraso; se puede fijar en línea
+     (`style={{ "--i": 2 }}`) en cualquier `[data-reveal]` o hijo de grupo.
+   - El observador añade `data-revealed` al elemento o al grupo (una sola vez).
+   - Red de seguridad: `data-reveal-all` en <html> revela todo lo pendiente.
+   El estado oculto solo existe con JS y sin movimiento reducido: sin scripting,
+   con `prefers-reduced-motion: reduce` o al imprimir, todo se ve desde el principio.
+   Solo se animan opacity, translate, scale y clip-path. Se usan animaciones (no
+   transiciones) para no pisar los `transition-*` ni los hovers de cada elemento.
+   ========================================================================== */
+@property --i {
+  syntax: "<integer>";
+  inherits: false;
+  initial-value: 0;
+}
+
+@property --w {
+  syntax: "<integer>";
+  inherits: false;
+  initial-value: 0;
+}
+
+/* Estructura de las palabras de Titles: igual con y sin movimiento para que el
+   salto de línea no cambie. Solo recorta en vertical (con holgura para tildes). */
+@layer components {
+  .reveal-word {
+    display: inline-block;
+    vertical-align: top;
+    overflow-x: visible;
+    overflow-y: clip;
+    padding-block: 0.12em;
+    margin-block: -0.12em;
+  }
+
+  .reveal-word > span {
+    display: inline-block;
+  }
+}
+
+@keyframes reveal-fade-up {
+  from {
+    opacity: 0;
+    translate: 0 16px;
+  }
+}
+
+@keyframes reveal-clip {
+  from {
+    clip-path: inset(8% round var(--reveal-radius, 12px));
+  }
+  to {
+    clip-path: inset(0 round var(--reveal-radius, 12px));
+  }
+}
+
+@keyframes reveal-zoom {
+  from {
+    scale: 1.06;
+  }
+}
+
+@keyframes reveal-word {
+  from {
+    translate: 0 110%;
+  }
+}
+
+@media screen and (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  [data-reveal-group] > :nth-child(2) {
+    --i: 1;
+  }
+  [data-reveal-group] > :nth-child(3) {
+    --i: 2;
+  }
+  [data-reveal-group] > :nth-child(4) {
+    --i: 3;
+  }
+  [data-reveal-group] > :nth-child(5) {
+    --i: 4;
+  }
+  [data-reveal-group] > :nth-child(6) {
+    --i: 5;
+  }
+  [data-reveal-group] > :nth-child(n + 7) {
+    --i: 6;
+  }
+
+  /* Estado oculto: pendiente de revelar y sin red de seguridad. */
+  html:not([data-reveal-all])
+    [data-reveal]:not(
+      [data-reveal="image"],
+      [data-reveal="words"],
+      [data-revealed]
+    ),
+  html:not([data-reveal-all]) [data-reveal-group]:not([data-revealed]) > * {
+    opacity: 0;
+    translate: 0 16px;
+  }
+
+  /* El clip-path no recorta el desborde con scroll: sin esto, la imagen a escala 1.06
+     genera scroll horizontal antes del revelado. */
+  [data-reveal="image"] {
+    overflow: clip;
+  }
+
+  html:not([data-reveal-all]) [data-reveal="image"]:not([data-revealed]) {
+    clip-path: inset(8% round var(--reveal-radius, 12px));
+  }
+
+  html:not([data-reveal-all])
+    [data-reveal="image"]:not([data-revealed])
+    :is(img:not(.blur-image > img), video, .blur-image) {
+    scale: 1.06;
+  }
+
+  html:not([data-reveal-all])
+    [data-reveal="words"]:not([data-revealed])
+    .reveal-word
+    > span {
+    translate: 0 110%;
+  }
+
+  /* Revelado (por el observador o por la red de seguridad). */
+  :is([data-revealed], html[data-reveal-all] [data-reveal]):not(
+    [data-reveal="image"],
+    [data-reveal="words"],
+    [data-reveal-group]
+  ),
+  :is(
+      [data-reveal-group][data-revealed],
+      html[data-reveal-all] [data-reveal-group]
+    )
+    > * {
+    animation: reveal-fade-up var(--transition-duration-base)
+      var(--ease-out-soft) backwards;
+    animation-delay: calc(min(var(--i), 6) * var(--transition-delay-stagger));
+  }
+
+  :is(
+    [data-reveal="image"][data-revealed],
+    html[data-reveal-all] [data-reveal="image"]
+  ) {
+    animation: reveal-clip var(--transition-duration-slow) var(--ease-out-soft)
+      backwards;
+    animation-delay: calc(min(var(--i), 6) * var(--transition-delay-stagger));
+  }
+
+  :is(
+      [data-reveal="image"][data-revealed],
+      html[data-reveal-all] [data-reveal="image"]
+    )
+    :is(img:not(.blur-image > img), video, .blur-image) {
+    animation: reveal-zoom var(--transition-duration-slow) var(--ease-out-soft)
+      backwards;
+  }
+
+  :is(
+      [data-reveal="words"][data-revealed],
+      html[data-reveal-all] [data-reveal="words"]
+    )
+    .reveal-word
+    > span {
+    animation: reveal-word var(--transition-duration-slow) var(--ease-out-soft)
+      backwards;
+    animation-delay: calc(var(--w) * 40ms);
+  }
+}
+
+/* Clases de componente en `@layer components`: las utilidades pueden sobrescribirlas. */
+@layer components {
+  /* ==========================================================================
+     Texto que rueda en MainButton / SecondaryButton (RollText)
+     `.roll-trigger` va en el <a>/<button>; `.roll-text` contiene el texto visible y
+     una copia en `::after` (texto alternativo vacío) que espera debajo, recortada. Solo con ratón y sin
+     movimiento reducido; en disabled / aria-disabled no rueda.
+     ========================================================================== */
+  .roll-text {
+    display: inline-grid;
+    vertical-align: top;
+    overflow: clip;
+  }
+
+  .roll-text > *,
+  .roll-text::after {
+    grid-area: 1 / 1;
+  }
+
+  .roll-text::after {
+    content: attr(data-text) / "";
+    translate: 0 100%;
+    user-select: none;
+  }
+
+  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .roll-text > *,
+    .roll-text::after {
+      transition: translate var(--transition-duration-fast)
+        var(--ease-in-out-soft);
+    }
+
+    .roll-trigger:hover:not(:disabled, [aria-disabled="true"]) .roll-text > * {
+      translate: 0 -100%;
+    }
+
+    .roll-trigger:hover:not(:disabled, [aria-disabled="true"])
+      .roll-text::after {
+      translate: 0 0;
+    }
+  }
+
+  /* ==========================================================================
+     Subrayado animado (Enlance, NavbarLinks)
+     Crece desde la izquierda al entrar y se recoge hacia la derecha al salir.
+     Usa currentColor: hereda el amarillo del enlace activo del scrollspy.
+     ========================================================================== */
+  .link-underline {
+    position: relative;
+  }
+
+  .link-underline::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    bottom: -0.15em;
+    height: max(1px, 0.06em);
+    background-color: currentColor;
+    scale: 0 1;
+    transform-origin: right;
+    transition: scale var(--transition-duration-fast) var(--ease-in-out-soft);
+    pointer-events: none;
+  }
+
+  @media (hover: hover) {
+    .link-underline:hover::after {
+      scale: 1 1;
+      transform-origin: left;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .link-underline::after {
+      transition: none;
+    }
+  }
+
+  /* ==========================================================================
+     Marquee (CSS puro)
+     Dos listas iguales (la segunda `aria-hidden` + `inert`) que se desplazan -50 %.
+     Cada lista mide al menos el ancho del contenedor (`100cqw`) para que no queden
+     huecos. Se pausa con hover o foco dentro. Movimiento reducido: fila estática.
+     ========================================================================== */
+  .marquee {
+    container-type: inline-size;
+    overflow: clip;
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      #000 10%,
+      #000 90%,
+      transparent
+    );
+  }
+
+  .marquee-track {
+    display: flex;
+    width: max-content;
+    animation: marquee var(--marquee-duration, 40s) linear infinite;
+  }
+
+  .marquee-list {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: space-around;
+    gap: var(--marquee-gap, 3rem);
+    min-width: 100cqw;
+    padding-inline-end: var(--marquee-gap, 3rem);
+  }
+
+  /* Pausa: hover o foco dentro de la pista, o el botón `MarqueeToggle`
+     (`data-paused` en `.marquee-root`; WCAG 2.2.2, también en táctil). */
+  .marquee:hover .marquee-track,
+  .marquee:focus-within .marquee-track,
+  .marquee-root[data-paused] .marquee-track {
+    animation-play-state: paused;
+  }
+
+  @keyframes marquee {
+    to {
+      translate: -50% 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .marquee {
+      mask-image: none;
+    }
+
+    .marquee-track {
+      width: auto;
+      animation: none;
+    }
+
+    .marquee-list {
+      flex-shrink: 1;
+      width: 100%;
+      flex-wrap: wrap;
+      justify-content: center;
+      min-width: 0;
+      padding-inline-end: 0;
+    }
+
+    .marquee-list[aria-hidden="true"] {
+      display: none;
+    }
+  }
+
+  /* ==========================================================================
+     BlurImage: placeholder borroso en el envoltorio + fundido de la foto al cargar.
+     `data-blur-state` lo pone el componente: "loading" (no estaba completa al
+     montar) → "loaded" (fundido de 400 ms) → "done" (se quita el placeholder).
+     Sin JS o con movimiento reducido la foto nunca se oculta.
+     ========================================================================== */
+  .blur-image {
+    background-image: var(--blur-image, none);
+  }
+
+  .blur-image[data-blur-state="done"] {
+    background-image: none;
+  }
+
+  @keyframes blur-image-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+    .blur-image[data-blur-state="loading"] > img {
+      opacity: 0;
+    }
+
+    .blur-image[data-blur-state="loaded"] > img {
+      animation: blur-image-in 400ms var(--ease-out-soft);
+    }
+  }
+}
+
+/* ==========================================================================
+   Entrada del hero y de la navbar al cargar (spec 05, fase 2)
+   Solo CSS: no espera a JS ni al observador. Orden: insignia (0 ms) → h1 palabra a palabra
+   (80 ms + 30 ms × palabra) → párrafo (300 ms) → botones (400 ms); ≈ 960 ms en total.
+   La navbar baja con un fundido. `backwards`: al terminar no queda ningún estilo aplicado
+   (la navbar no conserva un `translate` que convertiría a su overlay `fixed` en relativo).
+   LCP: los bloques arrancan con opacidad 0,01 (no 0), así cuentan como pintados desde el
+   primer frame. Con movimiento reducido no hay nada. `HeroScaffold` espera a que acaben
+   las animaciones `hero-intro-*` para empezar el montaje.
+   ========================================================================== */
+@keyframes hero-intro-fade-up {
+  from {
+    opacity: 0.01;
+    translate: 0 16px;
+  }
+}
+
+@keyframes hero-intro-word {
+  from {
+    translate: 0 110%;
+  }
+}
+
+@keyframes hero-intro-nav {
+  from {
+    opacity: 0;
+    translate: 0 -12px;
+  }
+}
+
+@media screen and (prefers-reduced-motion: no-preference) {
+  .hero-intro {
+    animation: hero-intro-fade-up 550ms var(--ease-out-soft) backwards;
+    animation-delay: var(--intro-delay, 0ms);
+  }
+
+  .hero-intro-title .reveal-word > span {
+    animation: hero-intro-word 550ms var(--ease-out-soft) backwards;
+    animation-delay: calc(80ms + var(--w) * 30ms);
+  }
+
+  .nav-intro {
+    animation: hero-intro-nav 600ms var(--ease-out-soft) backwards;
   }
 }
