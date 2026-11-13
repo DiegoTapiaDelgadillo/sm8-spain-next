@@ -1,6 +1,7 @@
 "use client";
 import { Form } from "@/components/shared/Forms/Form/Form";
 import { InputText } from "@/components/shared/Forms/Inputs/InputText/InputText";
+import { PhoneInput } from "@/components/shared/Forms/PhoneInput/PhoneInput";
 import { TextArea } from "@/components/shared/Forms/TextArea/TextArea";
 import { useToast } from "@/components/shared/Toast/useToast";
 import { BUSINESS } from "@/lib/business";
@@ -13,22 +14,28 @@ import {
   type ContactFormValues,
   type ContactResponse,
 } from "@/lib/contact/schema";
+import {
+  COUNTRIES,
+  DEFAULT_COUNTRY,
+  FREQUENT_COUNTRY_CODES,
+} from "@/lib/contact/countries";
 import { api } from "@/lib/http/api";
 import axios from "axios";
 import * as z from "zod";
 import { useRef, useState } from "react";
 
 type FieldName = keyof ContactFormValues;
-type TextFieldName = Exclude<FieldName, "privacy" | "message">;
+type TextFieldName = Exclude<
+  FieldName,
+  "privacy" | "message" | "phone" | "phoneCountry"
+>;
 type FormErrors = Partial<Record<FieldName, string>>;
 
 const INITIAL_VALUES: ContactFormValues = {
   name: "",
-  email: "",
   phone: "",
-  subject: "",
-  company: "",
-  city: "",
+  phoneCountry: DEFAULT_COUNTRY,
+  email: "",
   message: "",
   privacy: false,
 };
@@ -36,14 +43,17 @@ const INITIAL_VALUES: ContactFormValues = {
 /** Orden visual de los campos: el foco va al primero con error. */
 const FIELD_ORDER: FieldName[] = [
   "name",
-  "email",
   "phone",
-  "subject",
-  "company",
-  "city",
+  "phoneCountry",
+  "email",
   "message",
   "privacy",
 ];
+
+/** `id` del control que recibe el foco cuando el campo tiene error. */
+const FIELD_FOCUS_ID: Partial<Record<FieldName, string>> = {
+  phoneCountry: "phone-country",
+};
 
 interface TextFieldConfig {
   name: TextFieldName;
@@ -55,54 +65,22 @@ interface TextFieldConfig {
   filter?: (value: string) => string;
 }
 
-const TEXT_FIELDS: TextFieldConfig[] = [
-  {
-    name: "name",
-    label: "Nombre",
-    placeholder: "Ej: Juan Pérez",
-    type: "text",
-    autoComplete: "name",
-    filter: filterNameInput,
-  },
-  {
-    name: "email",
-    label: "Correo electrónico",
-    placeholder: "Ej: juan.perez@ejemplo.com",
-    type: "email",
-    autoComplete: "email",
-  },
-  {
-    name: "phone",
-    label: "Teléfono",
-    placeholder: "Ej: 612 345 678",
-    type: "tel",
-    autoComplete: "tel",
-    inputMode: "tel",
-    filter: filterPhoneInput,
-  },
-  {
-    name: "subject",
-    label: "Asunto",
-    placeholder: "Ej: Consulta sobre servicios",
-    type: "text",
-    autoComplete: "off",
-  },
-  {
-    name: "company",
-    label: "Empresa",
-    placeholder: "Ej: Construcciones Ejemplo S.L.",
-    type: "text",
-    autoComplete: "organization",
-  },
-  {
-    name: "city",
-    label: "Ciudad",
-    placeholder: "Ej: Madrid",
-    type: "text",
-    autoComplete: "address-level2",
-    filter: filterNameInput,
-  },
-];
+const NAME_FIELD: TextFieldConfig = {
+  name: "name",
+  label: "Nombre completo",
+  placeholder: "Ej: Juan Pérez García",
+  type: "text",
+  autoComplete: "name",
+  filter: filterNameInput,
+};
+
+const EMAIL_FIELD: TextFieldConfig = {
+  name: "email",
+  label: "Correo electrónico",
+  placeholder: "Ej: juan.perez@ejemplo.com",
+  type: "email",
+  autoComplete: "email",
+};
 
 /** Primer mensaje de cada campo (sirve para zod y para los `fieldErrors` del servidor). */
 const toFormErrors = (fieldErrors: ContactFieldErrors): FormErrors => {
@@ -125,7 +103,8 @@ const validate = (values: ContactFormValues) => {
 
 const focusFirstError = (errors: FormErrors) => {
   const first = FIELD_ORDER.find((field) => errors[field]);
-  if (first) document.getElementById(first)?.focus();
+  if (!first) return;
+  document.getElementById(FIELD_FOCUS_ID[first] ?? first)?.focus();
 };
 
 const SUCCESS_MESSAGE =
@@ -149,10 +128,18 @@ export const ContactForm = () => {
   // Evita dobles envíos aunque el estado aún no se haya repintado.
   const submittingRef = useRef(false);
 
-  /** Recalcula el error de un campo con los valores nuevos. */
-  const refreshFieldError = (field: FieldName, next: ContactFormValues) => {
-    const fieldError = validate(next).errors[field];
-    setErrors((prev) => ({ ...prev, [field]: fieldError }));
+  /** Recalcula el error de uno o varios campos con los valores nuevos. */
+  const refreshFieldError = (
+    field: FieldName | FieldName[],
+    next: ContactFormValues,
+  ) => {
+    const fields = Array.isArray(field) ? field : [field];
+    const nextErrors = validate(next).errors;
+    setErrors((prev) => {
+      const updated = { ...prev };
+      for (const f of fields) updated[f] = nextErrors[f];
+      return updated;
+    });
   };
 
   const updateField = <K extends FieldName>(
@@ -162,6 +149,15 @@ export const ContactForm = () => {
     const next = { ...values, [field]: value };
     setValues(next);
     if (submitAttempted || touched[field]) refreshFieldError(field, next);
+  };
+
+  /** Cambia el país y, si el teléfono ya se validaba, lo revalida. */
+  const handleCountryChange = (code: string) => {
+    const next = { ...values, phoneCountry: code };
+    setValues(next);
+    if (submitAttempted || touched.phone) {
+      refreshFieldError(["phone", "phoneCountry"], next);
+    }
   };
 
   const handleBlur = (field: FieldName) => {
@@ -221,6 +217,29 @@ export const ContactForm = () => {
     }
   };
 
+  const renderTextField = (field: TextFieldConfig) => (
+    <InputText
+      key={field.name}
+      label={field.label}
+      name={field.name}
+      type={field.type}
+      placeholder={field.placeholder}
+      value={values[field.name]}
+      onChange={(e) =>
+        updateField(
+          field.name,
+          field.filter ? field.filter(e.target.value) : e.target.value,
+        )
+      }
+      onBlur={() => handleBlur(field.name)}
+      error={errors[field.name]}
+      required
+      inputMode={field.inputMode}
+      autoComplete={field.autoComplete}
+      maxLength={MAX_LENGTHS[field.name]}
+    />
+  );
+
   return (
     <div className=" border border-neutral-800 w-full rounded-xl bg-linear-to-b from-neutral-900/60 to-black p-4 md:p-8">
       <div>
@@ -236,28 +255,25 @@ export const ContactForm = () => {
         privacyError={errors.privacy}
         isSubmitting={isSubmitting}
       >
-        {TEXT_FIELDS.map((field) => (
-          <InputText
-            key={field.name}
-            label={field.label}
-            name={field.name}
-            type={field.type}
-            placeholder={field.placeholder}
-            value={values[field.name]}
-            onChange={(e) =>
-              updateField(
-                field.name,
-                field.filter ? field.filter(e.target.value) : e.target.value,
-              )
-            }
-            onBlur={() => handleBlur(field.name)}
-            error={errors[field.name]}
-            required
-            inputMode={field.inputMode}
-            autoComplete={field.autoComplete}
-            maxLength={MAX_LENGTHS[field.name]}
-          />
-        ))}
+        {renderTextField(NAME_FIELD)}
+        <PhoneInput
+          label="Teléfono"
+          name="phone"
+          value={values.phone}
+          onChange={(e) =>
+            updateField("phone", filterPhoneInput(e.target.value))
+          }
+          onBlur={() => handleBlur("phone")}
+          country={values.phoneCountry}
+          onCountryChange={handleCountryChange}
+          countries={COUNTRIES}
+          frequentCodes={FREQUENT_COUNTRY_CODES}
+          error={errors.phone ?? errors.phoneCountry}
+          required
+          maxLength={MAX_LENGTHS.phone}
+          placeholder="Número"
+        />
+        {renderTextField(EMAIL_FIELD)}
         <TextArea
           label="Mensaje"
           name="message"
