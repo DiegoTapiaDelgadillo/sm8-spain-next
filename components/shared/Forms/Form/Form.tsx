@@ -24,7 +24,7 @@ export const Form = (props: FormProps) => {
     >
       {props.children}
       <div>
-        <div className=" flex gap-2 items-start">
+        <div className=" flex gap-2 items-center">
           <CheckBox
             id={PRIVACY_ID}
             checked={props.privacyChecked}

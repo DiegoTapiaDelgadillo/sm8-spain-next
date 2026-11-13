@@ -138,14 +138,12 @@ export async function POST(request: Request) {
   }
 
   // `privacy` solo se valida; no va en los correos.
-  const { name, email, phone, subject, company, city, message } = parsed.data;
+  const { name, phone, phoneCountry, email, message } = parsed.data;
   const contact: ContactPayload = {
     name,
-    email,
     phone,
-    subject,
-    company,
-    city,
+    phoneCountry,
+    email,
     message,
   };
 
@@ -178,9 +176,7 @@ export async function POST(request: Request) {
         from,
         to: [to],
         replyTo: contact.email,
-        subject: singleLine(
-          `Nuevo contacto web: ${contact.name} · ${contact.subject}`,
-        ),
+        subject: singleLine(`Nuevo contacto web: ${contact.name}`),
         html: internalHtml,
         text: internalText,
       },

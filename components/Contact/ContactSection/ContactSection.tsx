@@ -2,7 +2,7 @@ import type { SectionAnchorProps } from "@/types/shared/section/section";
 import { CertItem } from "@/components/Certifications/CertItem/CertItem";
 import { Section } from "@/components/shared/Section/Section";
 import { Titles } from "@/components/shared/Titles/Titles";
-import { ContactForm } from "../ContactForm/ContactForm";
+import { ContactFormLazy } from "../ContactFormLazy/ContactFormLazy";
 import { MapPin } from "@/components/shared/Icons/MapPin";
 import { PhoneSvg } from "@/components/shared/Icons/PhoneSvg";
 import { EnvelopeSvg } from "@/components/shared/Icons/EnvelopeSvg";
@@ -67,7 +67,7 @@ export const ContactSection = ({ id }: SectionAnchorProps) => {
         </div>
         {/* Solo el formulario usa avisos: el proveedor (cliente) no envuelve el layout. */}
         <ToastProvider>
-          <ContactForm />
+          <ContactFormLazy />
         </ToastProvider>
       </div>
     </Section>

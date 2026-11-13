@@ -14,10 +14,12 @@ import {
   pixelBasedPreset,
 } from "@react-email/components";
 import { Fragment, type FC, type ReactNode } from "react";
+import { getCountry } from "@/lib/contact/countries";
+import { formatPhoneInternational } from "@/lib/contact/schema";
 import { getEmailAssets } from "@/lib/email/assets";
 import type { EmailInfoProps } from "@/types/email/email";
 
-// Aviso interno con los datos del contacto (spec 03). Colores en hex: muchos
+// Aviso interno con los datos del contacto (specs 03 y 06). Colores en hex: muchos
 // clientes de correo no entienden los `oklch` de la paleta de Tailwind v4.
 // Borde, subrayado y fuente van en `style` y los radios en px: Tailwind los
 // convierte en `text-decoration-line` y `rem`, que algunos clientes ignoran.
@@ -49,23 +51,24 @@ const singleLine = (value: string) => value.replace(/\s+/g, " ").trim();
 
 export const EmailInfo: FC<EmailInfoProps> = ({
   name,
-  email,
   phone,
-  subject,
-  company,
-  city,
+  phoneCountry,
+  email,
   message,
 }) => {
   const { logo } = getEmailAssets();
   const replyHref = `mailto:${email}?subject=${encodeURIComponent(
-    `Re: ${singleLine(subject)}`,
+    "Re: Tu solicitud en SM8 España",
   )}`;
-  const phoneHref = `tel:${phone.replace(/\s+/g, "")}`;
+  // `phone` llega en E.164 (`+393123456789`): enlace tal cual, texto legible.
+  const phoneHref = `tel:${phone}`;
+  const countryName = getCountry(phoneCountry)?.name;
+  const phoneLabel = formatPhoneInternational(phone);
 
   return (
     <Html lang="es">
       <Head />
-      <Preview>{singleLine(`Nuevo contacto web de ${name}: ${subject}`)}</Preview>
+      <Preview>{singleLine(`Nuevo contacto web de ${name}`)}</Preview>
       <Tailwind config={{ presets: [pixelBasedPreset] }}>
         <Body
           className="m-0 bg-[#f5f5f5] p-4"
@@ -90,6 +93,16 @@ export const EmailInfo: FC<EmailInfoProps> = ({
 
             <Section>
               <Field label="Nombre">{name}</Field>
+              <Field label="Teléfono">
+                <Link
+                  href={phoneHref}
+                  className="text-[#a16207]"
+                  style={UNDERLINE}
+                >
+                  {phoneLabel}
+                </Link>
+                {countryName && ` (${countryName})`}
+              </Field>
               <Field label="Email">
                 <Link
                   href={`mailto:${email}`}
@@ -99,18 +112,6 @@ export const EmailInfo: FC<EmailInfoProps> = ({
                   {email}
                 </Link>
               </Field>
-              <Field label="Teléfono">
-                <Link
-                  href={phoneHref}
-                  className="text-[#a16207]"
-                  style={UNDERLINE}
-                >
-                  {phone}
-                </Link>
-              </Field>
-              <Field label="Asunto">{subject}</Field>
-              <Field label="Empresa">{company}</Field>
-              <Field label="Ciudad">{city}</Field>
             </Section>
 
             <Section className="mt-4">
