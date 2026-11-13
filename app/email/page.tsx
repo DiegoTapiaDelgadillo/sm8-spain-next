@@ -15,12 +15,11 @@ export const metadata: Metadata = {
 };
 
 const SAMPLE: EmailInfoProps = {
-  name: "Juan Pérez",
-  email: "juan.perez@example.com",
-  phone: "+34 600 000 000",
-  subject: "Presupuesto para fachada",
-  company: "Construcciones Ejemplo S.L.",
-  city: "Madrid",
+  name: "Giulia Rossi Bianchi",
+  // Como sale del esquema: E.164 y país real del número (spec 06).
+  phone: "+393123456789",
+  phoneCountry: "IT",
+  email: "giulia.rossi@example.com",
   message:
     "Hola:\nNecesitamos un andamio para una fachada de cuatro plantas.\n\n¿Podéis pasarnos presupuesto?",
 };
