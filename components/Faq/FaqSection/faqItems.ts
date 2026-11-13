@@ -7,39 +7,47 @@ import { BUSINESS } from "@/lib/business";
  */
 export const FAQ_ITEMS: readonly FaqItem[] = [
   {
-    id: "montaje-desmontaje",
-    question: "¿Montáis y desmontáis el andamio?",
+    id: "precio",
+    question: "¿Cuánto cuesta alquilar un andamio?",
     answer:
-      "Sí. Nuestro servicio de alquiler incluye el montaje y el desmontaje, que realiza personal propio cualificado con el Sistema Multidireccional SM8.",
+      "Depende de los metros de fachada, la altura, el tiempo de alquiler y el acceso a la obra. Hacemos una visita técnica y te enviamos un presupuesto sin compromiso en menos de 24 horas.",
   },
   {
-    id: "que-es-pmud",
-    question: "¿Qué es el PMUD?",
+    id: "montaje",
+    question: "¿El alquiler incluye el montaje y el desmontaje?",
     answer:
-      "El Plan de Montaje, Utilización y Desmontaje (PMUD) es el documento que define cómo se monta, se usa y se desmonta un andamio con seguridad. Nosotros lo redactamos por ti.",
+      "Sí. Nuestro personal propio y cualificado se encarga del montaje y el desmontaje con el Sistema Multidireccional SM8.",
   },
   {
-    id: "licencias",
-    question: "¿Os encargáis de las licencias del andamio?",
+    id: "tiempo",
+    question: "¿Hay un tiempo mínimo de alquiler?",
     answer:
-      "Sí. Gestionamos las licencias necesarias para montar el andamio, además del PMUD.",
+      "Pactamos contigo un periodo inicial, por días o por meses. Si la obra se alarga, ampliamos el alquiler sin problema.",
   },
   {
-    id: "multidireccional-vs-europeo",
-    question:
-      "¿Qué ventajas tiene el andamio multidireccional frente al europeo?",
+    id: "multidireccional",
+    question: "¿Qué tipo de andamio usáis?",
     answer:
-      "El andamio europeo (de marco) se monta en módulos fijos sobre planos rectos. El multidireccional une sus piezas en una roseta octogonal en varias direcciones, así que se adapta a esquinas, curvas, desniveles e instalaciones industriales.",
-  },
-  {
-    id: "venta",
-    question: "¿Vendéis el andamio o solo lo alquiláis?",
-    answer:
-      "Las dos cosas. Además del alquiler con montaje, vendemos los componentes del Sistema Multidireccional SM8. Descarga la ficha técnica o pídenos presupuesto.",
+      "Trabajamos con andamio multidireccional. A diferencia del andamio europeo de marcos, sus piezas se unen en una roseta en varias direcciones, así que se adapta a esquinas, curvas, desniveles e instalaciones industriales.",
   },
   {
     id: "zonas",
     question: "¿En qué zonas trabajáis?",
-    answer: `En toda la ${BUSINESS.areaServed}. Nuestra oficina está en la ${BUSINESS.address.street}, ${BUSINESS.address.district} (${BUSINESS.address.city}).`,
+    answer: " En toda la Comunidad de Madrid y en las provincias limítrofes.",
+  },
+  {
+    id: "comunidades",
+    question: "¿Trabajáis con comunidades de vecinos?",
+    answer: `Sí. Montamos andamios para rehabilitación de fachadas, cubiertas y patios de luces, y coordinamos los accesos para molestar lo menos posible a los vecinos.`,
+  },
+  {
+    id: "permisos",
+    question: "¿Os encargáis de los permisos del ayuntamiento?",
+    answer: `No. La tramitación de licencias y permisos corre a cargo del cliente o de su empresa constructora. Si los necesitas, te facilitamos la información técnica del andamio.`,
+  },
+  {
+    id: "ventas",
+    question: "¿Vendéis andamios o solo los alquiláis?",
+    answer: `Las dos cosas. Además del alquiler con montaje, vendemos los componentes del Sistema Multidireccional SM8. Solicita la ficha técnica o pídenos presupuesto.`,
   },
 ];
