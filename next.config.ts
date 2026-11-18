@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
   /* config options here */
   cacheComponents: true,
   partialPrefetching: true,
+  experimental: {
+    agentUpgrade: "security",
+  },
   // Rutas del sitio anterior (SPA en Vercel). Permanentes (308) y sin comodines
   // para no capturar /sitemap.xml, /robots.txt ni /_next.
   async redirects() {
