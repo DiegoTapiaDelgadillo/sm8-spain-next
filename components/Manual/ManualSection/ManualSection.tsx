@@ -4,7 +4,7 @@ import { DownloadSvg } from "@/components/shared/Icons/Download";
 import { Section } from "@/components/shared/Section/Section";
 import { Titles } from "@/components/shared/Titles/Titles";
 import { BlurImage } from "@/components/shared/BlurImage/BlurImage";
-import manual from "@/public/img/manual.webp";
+import manual from "@/public/img/manual.png";
 
 export const ManualSection = () => {
   return (
@@ -18,11 +18,11 @@ export const ManualSection = () => {
             sizes="(min-width: 26rem) 24rem, calc(100vw - 2rem)"
             alt="Manual"
             wrapperClassName="w-full"
-            className="h-auto w-full"
+            className="h-auto w-full rounded-2xl "
           />
         </div>
       </div>
-      <div className=" mt-0 mb-6">
+      <div className=" mt-8 mb-6">
         <Titles
           titleClassName=" text-center"
           subtitleClassName=" text-center"
@@ -37,10 +37,16 @@ export const ManualSection = () => {
         style={{ "--i": 3 } as CSSProperties}
         className=" w-full flex justify-center"
       >
-        <MainButton
-          icon={<DownloadSvg className="w-4" />}
-          text="Descargar ficha técnica"
-        />
+        <a
+          href="https://publuu.com/flip-book/177837/447636"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <MainButton
+            icon={<DownloadSvg className="w-4" />}
+            text="Descargar ficha técnica"
+          />
+        </a>
       </div>
     </Section>
   );
