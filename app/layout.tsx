@@ -7,6 +7,8 @@ import { BUSINESS } from "@/lib/business";
 import { SEO } from "@/lib/seo/seo";
 import { RevealObserver } from "@/components/shared/Motion/RevealObserver";
 import { SmoothScroll } from "@/components/shared/Motion/SmoothScroll";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 /**
  * Red de seguridad del revelado (spec 05): si a los 3 s `RevealObserver` no ha marcado
@@ -78,6 +80,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Footer links={links} />
         <RevealObserver />
         <SmoothScroll />
+        {/* Vercel Web Analytics (visitas, sin cookies) y Speed Insights (Core Web Vitals reales).
+            Solo envían datos desplegados en Vercel (producción y preview); en local no. */}
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
