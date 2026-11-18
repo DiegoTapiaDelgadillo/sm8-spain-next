@@ -37,7 +37,7 @@ export const ProjectsSection = ({ id }: SectionAnchorProps) => {
       {/* Grupo escalonado: cada tarjeta (hijo directo) entra 70 ms después de la anterior. */}
       <div
         data-reveal-group
-        className=" grid sm:grid-cols-1 md:grid-cols-2 lg:flex gap-8 w-full items-end"
+        className=" grid sm:grid-cols-1 lg:grid-cols-2 lg:flex gap-16 sm:gap-8 w-full items-end"
       >
         {projects.map((project) => (
           <ProjectCard
